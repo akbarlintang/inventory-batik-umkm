@@ -1,0 +1,123 @@
+<!--
+=========================================================
+* Argon Dashboard - v1.2.0
+=========================================================
+* Product Page: https://www.creative-tim.com/product/argon-dashboard
+
+
+* Copyright  Creative Tim (http://www.creative-tim.com)
+* Coded by www.creative-tim.com
+
+
+
+=========================================================
+* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="canonical" href="https://appseed.us/admin-dashboards/django-dashboard-argon">
+
+  <title>
+    {% block title %}{% endblock %} | Sistem Inventory Batik
+  </title>
+
+  {% load static %}
+
+  <!-- Favicon - loaded as static -->
+  <link rel="icon" href="{% static 'assets/img/brand/favicon.png' %}" type="image/png">
+  <!-- Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+  <!-- Icons -->
+  <link rel="stylesheet" href="{% static 'assets/vendor/nucleo/css/nucleo.css' %}" type="text/css">
+  <link rel="stylesheet" href="{% static 'assets/vendor/@fortawesome/fontawesome-free/css/all.min.css' %}"
+    type="text/css">
+  <!-- Page plugins -->
+  <!-- Argon CSS -->
+  <link rel="stylesheet" href="{% static 'assets/css/argon.css' %}" type="text/css">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+    integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <!-- Datatables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+  <!-- Specific CSS goes HERE -->
+  {% block stylesheets %}{% endblock stylesheets %}
+
+</head>
+
+<body class="">
+  {% include "includes/sidenav.html" %}
+
+  <div class="main-content" id="panel">
+
+    {% include "includes/navigation.html" %}
+
+    {% block content %}{% endblock content %}
+
+  </div>
+
+  {% include "includes/scripts.html" %}
+
+  <!-- Specific JS goes HERE -->
+  <script src="{% static 'assets/js/argon.js' %}"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+
+  <!-- Datatables -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+  <script>
+    function selectOutlet(id) {
+      var outletId = id;
+      axios.get("{% url 'outlet.select' 12345 %}".replace("12345", outletId))
+        .then(
+          response => {
+            location.reload()
+          }
+        ).catch(
+          e => {
+            "Terjadi Kesalahan"
+          }
+        )
+    }
+
+    var outletList = [];
+    function getOutlet() {
+      axios.get("{% url 'outlet.get' %}")
+        .then(
+          response => {
+            response.data.forEach((element, index) => {
+              $("#outlet-list").append('<li class="py-2">\
+              <a href="javascript:;" onclick="selectOutlet(\''+ element.pk + '\')" class="text-white text-decoration-none">\
+                '+ element.fields.name + '\
+              </a>\
+            </li>')
+            });
+          }
+        ).catch(
+          e => {
+            "Terjadi Kesalahan"
+          }
+        )
+    }
+
+    $(document).ready(function () {
+      // init function
+      getOutlet();
+    });
+  </script>
+
+  {% block javascripts %}{% endblock javascripts %}
+</body>
+
+</html>

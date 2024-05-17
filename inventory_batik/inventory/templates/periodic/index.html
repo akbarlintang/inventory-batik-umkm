@@ -1,0 +1,58 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Periodic Review {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Periodic Review System</h1>
+
+        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <div>
+            {% if messages %}
+            
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message | safe }}
+                </div>
+                {% endfor %}
+            
+            {% endif %}
+        </div>
+
+        <br>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="exampleFormControlFile1">Input file</label>
+                <input type="file" name="file" class="form-control-file" id="exampleFormControlFile1">
+            </div>
+
+            <button type="submit" class="btn btn-success">Calculate</button>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+{% endblock javascripts %}

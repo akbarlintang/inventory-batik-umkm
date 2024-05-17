@@ -1,0 +1,100 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Sales {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Daftar Penjualan</h1>
+
+        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <div>
+            {% if messages %}
+            
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message | safe }}
+                </div>
+                {% endfor %}
+            
+            {% endif %}
+        </div>
+
+        <div class="text-right">
+            <a href="{% url 'sales.create' %}" class="btn btn-success">Tambah Baru</a>
+        </div>
+
+        <br>
+
+        <table class="table table-bordered table-striped" id="datatable">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">ID</th>
+                    {% if request.session.outlet_id == 'all' %}
+                        <th class="text-center">Lokasi Outlet</th>
+                    {% endif %}
+                    <th class="text-center">Tanggal</th>
+                    <th class="text-center">Kode Item</th>
+                    <th class="text-center">Nama</th>
+                    <th class="text-center">Harga Beli</th>
+                    <th class="text-center">Jumlah</th>
+                    <th class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- daftar task-->
+                {% if sales %}
+                {% for sale in sales %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    {% if request.session.outlet_id == 'all' %}
+                        <td>{{ sale.outlet.name }}</td>
+                    {% endif %}
+                    <td class="text-center">{{ sale.created_at|date:"d F Y" }}</td>
+                    <td>{{ sale.item.code }}</td>
+                    <td>{{ sale.item.name }}</td>
+                    <td class="text-right">Rp {{ sale.price }}</td>
+                    <td class="text-right">{{ sale.amount }} {{ sale.unit }}</td>
+                    <td class="text-center">
+                        <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
+                        <a href="{% url 'sales.update' sale.id %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
+                        <a href="{% url 'sales.delete' sale.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i class="fa fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5">Data tidak ditemukan.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+<script>
+    let table = new DataTable('#datatable');
+</script>
+
+{% endblock javascripts %}
