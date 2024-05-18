@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ssu8x3#*3jntyjx@ztcve4w&0@8ts#*u$^tt=1wne0mdjd6r_t
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '127.0.0.1'
+    '103.175.216.137'
 ]
 
 
@@ -89,7 +89,7 @@ DATABASES = {
         # 'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'inventory_batik_pso',
-        'USER': 'root',
+        'USER': 'newuser',
         'PASSWORD': '123456aB',
         'HOST':'localhost',
         'PORT':'3306',
