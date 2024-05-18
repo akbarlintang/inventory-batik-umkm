@@ -91,7 +91,7 @@ DATABASES = {
         'NAME': 'inventory_batik_pso',
         'USER': 'root',
         'PASSWORD': '123456aB',
-        'HOST':'103.175.216.137',
+        'HOST':'localhost',
         'PORT':'3306',
         'OPTIONS': {
             'sql_mode': 'traditional',
