@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ssu8x3#*3jntyjx@ztcve4w&0@8ts#*u$^tt=1wne0mdjd6r_t
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '103.175.216.137','http://inventorybatik.my.id','inventorybatik.my.id'
+    '103.175.216.137','http://inventorybatik.my.id','inventorybatik.my.id', '127.0.0.1:8000'
 ]
 
 
