@@ -29,6 +29,13 @@ ALLOWED_HOSTS = [
     '103.175.216.137','http://inventorybatik.my.id','inventorybatik.my.id', '127.0.0.1'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://inventorybatik.my.id',
+    'https://inventorybatik.my.id',
+    'http://www.inventorybatik.my.id',
+    'https://www.inventorybatik.my.id',
+]
+
 
 # Application definition
 
