@@ -88,7 +88,7 @@ DATABASES = {
         # 'NAME': BASE_DIR / 'db.sqlite3',
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'inventory_batik_pso',
-        'USER': 'newuser',
+        'USER': 'root',
         'PASSWORD': '123456aB',
         'HOST':'localhost',
         'PORT':'3306',
