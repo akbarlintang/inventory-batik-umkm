@@ -29,7 +29,7 @@ class ItemForm(ModelForm):
         # merelasikan form dengan model
         model = Item
         # mengeset field apa saja yang akan ditampilkan pada form
-        fields = ('code', 'name', 'image', 'description', 'price', 'type', 'biaya_pesan', 'lead_time')
+        fields = ('code', 'name', 'description', 'price', 'type', 'biaya_pesan', 'lead_time')
         # mengatur teks label untuk setiap field
         labels = {
             'code': _('Kode Item'),
@@ -70,7 +70,7 @@ class MaterialForm(ModelForm):
         # merelasikan form dengan model
         model = Material
         # mengeset field apa saja yang akan ditampilkan pada form
-        fields = ('code', 'name', 'image', 'description', 'price', 'unit', 'biaya_pesan', 'lead_time')
+        fields = ('code', 'name', 'description', 'price', 'unit', 'biaya_pesan', 'lead_time')
         # mengatur teks label untuk setiap field
         labels = {
             'code': _('Kode Item'),
