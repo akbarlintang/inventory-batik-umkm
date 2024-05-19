@@ -113,7 +113,7 @@ class PurchaseForm(ModelForm):
         labels = {
             'outlet': _('Pilih Outlet'),
             'Item': _('Pilih Barang'),
-            'price': _('Harga Beli'),
+            'price': _('Total Harga Pembelian'),
             'amount': _('Jumlah Pembelian'),
             'unit': _('Satuan Barang'),
         }
@@ -142,7 +142,7 @@ class ProductionForm(ModelForm):
         labels = {
             'outlet': _('Pilih Outlet'),
             'Item': _('Pilih Barang'),
-            'amount': _('Jumlah Pembelian'),
+            'amount': _('Jumlah Produksi'),
         }
         error_messages = {
             'outlet': {
@@ -164,7 +164,7 @@ class SalesForm(ModelForm):
             'outlet': _('Pilih Outlet'),
             'Item': _('Pilih Barang'),
             'price': _('Harga Jual'),
-            'amount': _('Jumlah Pembelian'),
+            'amount': _('Total Nominal Transaksi'),
             'unit': _('Satuan Barang'),
         }
         error_messages = {
