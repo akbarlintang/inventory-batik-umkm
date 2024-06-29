@@ -188,18 +188,21 @@ def outlet_view(request):
 
 @login_required
 def outlet_create_view(request):
+    user_id         = request.user.id
     # Mengecek method pada request
     # Jika method-nya adalah POST, maka akan dijalankan
     # proses validasi dan penyimpanan data
     if request.method == 'POST':
-        # membuat objek dari class TaskForm
+       # membuat objek dari class OutletForm
         form = OutletForm(request.POST)
         # Mengecek validasi form
         if form.is_valid():
-            # Membuat Task baru dengan data yang disubmit
-            new_task = OutletForm(request.POST)
-            # Simpan data ke dalam table tasks
-            new_task.save()
+            # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            new_outlet = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            new_outlet.user_id = user_id
+            # Simpan objek outlet baru ke database
+            new_outlet.save()
             # mengeset pesan sukses dan redirect ke halaman daftar task
             messages.success(request, 'Sukses Menambah Outlet baru.')
             return redirect('outlet.index')
@@ -343,15 +346,19 @@ def product_create_view(request):
     # Mengecek method pada request
     # Jika method-nya adalah POST, maka akan dijalankan
     # proses validasi dan penyimpanan data
+    user_id         = request.user.id
+
     if request.method == 'POST':
         # membuat objek dari class TaskForm
         form = ItemForm(request.POST, request.FILES)
         # Mengecek validasi form
         if form.is_valid():
-            # Membuat Task baru dengan data yang disubmit
-            new_task = ItemForm(request.POST, request.FILES)
-            # Simpan data ke dalam table tasks
-            new_task.save()
+             # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            new_outlet = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            new_outlet.user_id = user_id
+            # Simpan objek outlet baru ke database
+            new_outlet.save()
             # mengeset pesan sukses dan redirect ke halaman daftar task
             messages.success(request, 'Sukses Menambah Item baru.')
             return redirect('product.index')
