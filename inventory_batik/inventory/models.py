@@ -4,6 +4,7 @@ from .utils import *
 class Outlet(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
+    user_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -18,6 +19,7 @@ class Item(models.Model):
     name = models.CharField(max_length=255)
     image = models.ImageField(upload_to="img/items/", null=True, blank=True)
     description = models.TextField()
+    user_id = models.IntegerField()
     price = models.IntegerField()
     biaya_pesan = models.IntegerField(default=None, null=True)
     lead_time = models.IntegerField(default=None, null=True)
@@ -52,6 +54,7 @@ class Material(models.Model):
 class Purchase(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     price = models.CharField(max_length=255)
     amount = models.IntegerField()
     unit = models.CharField(max_length=255, choices=UnitTypes.choices(), default=UnitTypes.KG)
@@ -66,6 +69,7 @@ class Sales(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     price = models.CharField(max_length=255)
     amount = models.IntegerField()
+    user_id = models.IntegerField()
     unit = models.CharField(max_length=255, choices=UnitTypes.choices(), default=UnitTypes.KG)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

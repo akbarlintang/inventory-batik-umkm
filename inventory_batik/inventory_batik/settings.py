@@ -89,7 +89,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'inventory_batik_pso',
         'USER': 'root',
-        'PASSWORD': '123456aB',
+        'PASSWORD': '',
         'HOST':'localhost',
         'PORT':'3306',
         'OPTIONS': {

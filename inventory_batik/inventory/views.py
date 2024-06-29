@@ -105,10 +105,11 @@ def login_view(request):
 # Dashboard
 @login_required
 def dashboard_view(request):
-    purchases       = Purchase.objects.all()
-    sales           = Sales.objects.all()
-    products        = Item.objects.filter(type="JADI")
-    outlets         = Outlet.objects.all()
+    user_id         = request.user.id
+    purchases       = Purchase.objects.filter(user_id=user_id)
+    sales           = Sales.objects.filter(user_id=user_id)
+    products        = Item.objects.filter(type="JADI", user_id=user_id)
+    outlets         = Outlet.objects.filter(user_id=user_id)
 
     purchase_total  = 0
     for p in purchases:
@@ -138,6 +139,7 @@ def logout_view(request):
     return redirect('login')
 
 def get_sales_data(request):
+    user_id         = request.user.id
     # Ambil tanggal awal bulan ini
     start_of_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -145,7 +147,7 @@ def get_sales_data(request):
     start_of_next_month = (start_of_month + timedelta(days=32)).replace(day=1)
 
     # Filter data penjualan hanya untuk bulan ini
-    sales = Sales.objects.filter(created_at__gte=start_of_month, created_at__lt=start_of_next_month)
+    sales = Sales.objects.filter(created_at__gte=start_of_month, created_at__lt=start_of_next_month, user_id=user_id)
 
     item_sales_count = {}
 
@@ -176,7 +178,8 @@ def get_purchase_data(request):
 # Outlet
 @login_required
 def outlet_view(request):
-    outlets = Outlet.objects.all()
+    user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     context = {
         'outlets': outlets
     }
@@ -328,7 +331,8 @@ def material_delete_view(request, material_id):
 # Product
 @login_required
 def product_view(request):
-    items = Item.objects.filter(type="JADI")
+    user_id         = request.user.id
+    items        = Item.objects.filter(type="JADI", user_id=user_id)
     context = {
         'items': items
     }
