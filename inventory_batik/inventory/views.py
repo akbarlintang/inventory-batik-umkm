@@ -275,7 +275,8 @@ def outlet_get_view(request):
 # Material
 @login_required
 def material_view(request):
-    materials = Material.objects.all()
+    user_id         = request.user.id
+    materials = Material.objects.filter(user_id=user_id)
     context = {
         'materials': materials
     }
@@ -287,15 +288,18 @@ def material_create_view(request):
     # Mengecek method pada request
     # Jika method-nya adalah POST, maka akan dijalankan
     # proses validasi dan penyimpanan data
+    user_id         = request.user.id
     if request.method == 'POST':
         # membuat objek dari class TaskForm
         form = MaterialForm(request.POST, request.FILES)
         # Mengecek validasi form
         if form.is_valid():
-            # Membuat Task baru dengan data yang disubmit
-            new_task = MaterialForm(request.POST, request.FILES)
-            # Simpan data ke dalam table tasks
-            new_task.save()
+            # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            new_outlet = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            new_outlet.user_id = user_id
+            # Simpan objek outlet baru ke database
+            new_outlet.save()
             # mengeset pesan sukses dan redirect ke halaman daftar task
             messages.success(request, 'Sukses Menambah Material baru.')
             return redirect('material.index')

@@ -12,6 +12,7 @@ class UnitTypes(Enum):
     KG = "kg"
     PCS = "pcs"
     METER = "meter"
+    YARD = "yard"
     
     @classmethod
     def choices(cls):

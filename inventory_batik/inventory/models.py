@@ -36,6 +36,7 @@ class Item(models.Model):
 class Material(models.Model):
     code = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
+    user_id = models.IntegerField()
     image = models.ImageField(upload_to="img/items/", null=True, blank=True)
     description = models.TextField()
     price = models.IntegerField()
