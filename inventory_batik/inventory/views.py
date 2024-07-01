@@ -267,7 +267,8 @@ def outlet_select_view(request, outlet_id):
     return HttpResponse(True)
 
 def outlet_get_view(request):
-    outlets = Outlet.objects.all()
+    user_id         = request.user.id
+    outlets = Outlet.objects.filter(user_id=user_id)
     data = serializers.serialize('json', outlets)
     
     return HttpResponse(data, content_type="text/json-comment-filtered")
@@ -607,13 +608,14 @@ def production_delete_view(request, production_id):
 # Sales
 @login_required
 def sales_view(request):
+    user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            sales = Sales.objects.all().order_by('-created_at')
+            sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
         else:
-            sales = Sales.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
+            sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        sales = Sales.objects.all()
+        sales = Sales.objects.filter(user_id=user_id)
 
     context = {
         'sales': sales
@@ -623,17 +625,24 @@ def sales_view(request):
 
 @login_required
 def sales_create_view(request):
+    user_id         = request.user.id
     if request.method == 'POST':
         form = SalesForm(request.POST)
         if form.is_valid():
-            temp = form.save()
+             # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            temp = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            temp.user_id = user_id
+            # Simpan objek outlet baru ke database
+            temp.save()
 
             # Simpan transaction dari sales
             Transaction.objects.create(
                 item_id = request.POST.get('item',''),
                 outlet_id = request.POST.get('outlet',''),
                 sales_id = temp.id,
-                type = 'sales'
+                type = 'sales',
+                user_id = user_id
             )
 
             # Simpan stock dari production
@@ -646,6 +655,7 @@ def sales_create_view(request):
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
                     amount = request.POST.get('amount',''),
+                    user_id = user_id
                 )
 
             messages.success(request, 'Sukses menambah penjualan baru.')
@@ -695,13 +705,14 @@ def sales_delete_view(request, sales_id):
 # Transaction
 @login_required
 def transaction_view(request):
+    user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            transactions = Transaction.objects.all().order_by('-created_at')
+            transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
         else:
-            transactions = Transaction.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
+            transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        transactions = Transaction.objects.all()
+        transactions = Transaction.objects.filter(user_id=user_id)
     
     context = {
         'transactions': transactions
@@ -712,13 +723,14 @@ def transaction_view(request):
 # Stocks
 @login_required
 def stock_view(request):
+    user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            stocks = Stock.objects.all()
+            stocks = Stock.objects.filter(user_id=user_id)
         else:
-            stocks = Stock.objects.filter(outlet_id=request.session['outlet_id'])
+            stocks = Stock.objects.filter(user_id=user_id)
     else:
-        stocks = Stock.objects.all()
+        stocks = Stock.objects.filter(user_id=user_id)
     
     context = {
         'stocks': stocks
@@ -737,7 +749,7 @@ def export_view(request):
         writer.writerow(['No', 'Nama Barang','Biaya Pesan','Permintaan Bahan Baku','Biaya Simpan','Biaya Kekurangan','Harga Produk','Lead Time Pemenuhan', 'Standar Deviasi'])
         items = Item.objects.filter(type="JADI").all()
         for idx, item in enumerate(items):
-            sales = Sales.objects.all().filter(item_id=item.id)
+            sales = Sales.objects.filter(user_id=user_id).filter(item_id=item.id)
 
             # return HttpResponse(len(sales))
             sales_count = 0
