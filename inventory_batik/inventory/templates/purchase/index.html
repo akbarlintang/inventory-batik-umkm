@@ -18,16 +18,16 @@
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
         <div>
             {% if messages %}
-            
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    {{ message | safe }}
-                </div>
-                {% endfor %}
-            
+
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                {{ message | safe }}
+            </div>
+            {% endfor %}
+
             {% endif %}
         </div>
 
@@ -42,7 +42,7 @@
                 <tr>
                     <th width="5%" class="text-center">ID</th>
                     {% if request.session.outlet_id == 'all' %}
-                        <th class="text-center">Lokasi Outlet</th>
+                    <th class="text-center">Lokasi Outlet</th>
                     {% endif %}
                     <th class="text-center">Kode Item</th>
                     <th class="text-center">Nama</th>
@@ -58,7 +58,7 @@
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
                     {% if request.session.outlet_id == 'all' %}
-                        <td>{{ purchase.outlet.name }}</td>
+                    <td>{{ purchase.outlet.name }}</td>
                     {% endif %}
                     <td>{{ purchase.item.code }}</td>
                     <td>{{ purchase.item.name }}</td>
@@ -66,15 +66,14 @@
                     <td class="text-right">{{ purchase.amount }} {{ purchase.unit }}</td>
                     <td class="text-center">
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
-                        <a href="{% url 'purchase.update' purchase.id %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
-                        <a href="{% url 'purchase.delete' purchase.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i class="fa fa-trash"></i></a>
+                        <a href="{% url 'purchase.update' purchase.id %}" class="btn btn-warning btn-sm"><i
+                                class="fa fa-edit"></i></a>
+                        <a href="{% url 'purchase.delete' purchase.id %}" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i
+                                class="fa fa-trash"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="5">Data tidak ditemukan.</td>
-                </tr>
                 {% endif %}
             </tbody>
         </table>
@@ -83,7 +82,7 @@
 
 {% endblock content %}
 
-<!-- Specific JS goes HERE --> 
+<!-- Specific JS goes HERE -->
 {% block javascripts %}
 
 {% load static %}

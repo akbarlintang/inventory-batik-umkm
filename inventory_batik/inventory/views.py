@@ -447,14 +447,14 @@ def product_recipe_delete_view(request, product_id, material_id):
 # Purchase
 @login_required
 def purchase_view(request):
+    user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            purchases = Purchase.objects.all().order_by('-created_at')
+            purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
         else:
-            purchases = Purchase.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
+            purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        purchases = Purchase.objects.all()
-
+        purchases = Purchase.objects.filter(user_id=user_id)
     context = {
         'purchases': purchases
     }
@@ -463,16 +463,23 @@ def purchase_view(request):
 
 @login_required
 def purchase_create_view(request):
+    user_id         = request.user.id
     if request.method == 'POST':
         form = PurchaseForm(request.POST)
         if form.is_valid():
-            temp = form.save()
+            # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            temp = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            temp.user_id = user_id
+            # Simpan objek outlet baru ke database
+            temp.save()
 
             # Simpan transaction dari purchase
             Transaction.objects.create(
                 item_id = request.POST.get('item',''),
                 outlet_id = request.POST.get('outlet',''),
                 purchase_id = temp.id,
+                user_id = user_id,
                 type = 'purchase'
             )
 
@@ -510,13 +517,14 @@ def purchase_delete_view(request, purchase_id):
 # Production
 @login_required
 def production_view(request):
+    user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            productions = Production.objects.all().order_by('-created_at')
+            productions = Production.objects.filter(user_id=user_id).order_by('-created_at')
         else:
-            productions = Production.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
+            productions = Production.objects.objects.filter(user_id=user_id).order_by('-created_at')
     else:
-        productions = Production.objects.all()
+        productions = Production.objects.filter(user_id=user_id)
 
     context = {
         'productions': productions
@@ -526,10 +534,16 @@ def production_view(request):
 
 @login_required
 def production_create_view(request):
+    user_id         = request.user.id
     if request.method == 'POST':
         form = ProductionForm(request.POST)
         if form.is_valid():
-            form.save()
+            # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            temp = form.save(commit=False)
+            # Tambahkan user_id dari pengguna yang sedang terautentikasi
+            temp.user_id = user_id
+            # Simpan objek outlet baru ke database
+            temp.save()
 
             # Simpan stock dari production
             try:
@@ -541,6 +555,7 @@ def production_create_view(request):
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
                     amount = request.POST.get('amount',''),
+                    user_id = user_id
                 )
 
             messages.success(request, 'Sukses menambah produksi baru.')

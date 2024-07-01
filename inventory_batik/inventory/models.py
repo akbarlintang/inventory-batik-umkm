@@ -82,6 +82,7 @@ class Production(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     amount = models.IntegerField()
+    user_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -92,6 +93,7 @@ class Stock(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     amount = models.IntegerField()
+    user_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -100,6 +102,7 @@ class Stock(models.Model):
 
 class Transaction(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, null=True)
     sales = models.ForeignKey(Sales, on_delete=models.CASCADE, null=True)
