@@ -741,6 +741,7 @@ def stock_view(request):
 # Export
 @login_required
 def export_view(request):
+    user_id         = request.user.id
     if request.method == 'POST':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="ExportData.csv"'        
@@ -794,15 +795,24 @@ def calculate_inventory_cost(product, to):
 
     # Mencari Q
     Q = math.sqrt((2 * A * D) / vr)
-
+    
+    if Q <= 0 :
+       biaya_pesan = (A * D)
+    else:
     # Mencari total biaya pesan
-    biaya_pesan = (A * D) / Q
+       biaya_pesan = (A * D) / Q
 
+   
     # Mencari total biaya simpan
     biaya_simpan = ((Q / 2) + (k * sigma_RL) * vr)
 
     # Mencari total biaya kekurangan
-    biaya_kekurangan = (B3 * sigma_RL * 0.216 * D) / Q
+    if Q <= 0 :
+       biaya_kekurangan = (B3 * sigma_RL * 0.216 * D)
+    else:
+    # Mencari total biaya pesan
+       biaya_kekurangan = (B3 * sigma_RL * 0.216 * D) / Q
+    
 
     # Hitung ongkos total dan masukkan ke dalam list
     ongkos_total = biaya_pesan + biaya_simpan + biaya_kekurangan
@@ -833,7 +843,11 @@ def periodic_view(request):
         for x in array:
             nama_barang = x['nama_barang']
             biaya_pesan = x['biaya_pesan']
-            permintaan_baku = x['permintaan_baku']
+            if x['permintaan_baku'] == 0 :
+                permintaan_baku = 1
+            else :
+                permintaan_baku = x['permintaan_baku'] 
+            
             biaya_simpan = x['biaya_simpan']
             biaya_kekurangan = x['biaya_kekurangan']
             harga_material = x['harga_material']
@@ -943,7 +957,7 @@ def periodic_view(request):
                 for i in range(5):
                     # Hitung nilai To
                     to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-
+                    
                     if i == 0:
                         to = to - 0.002
                     elif i == 1:
@@ -975,13 +989,18 @@ def periodic_view(request):
 
                     Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
                     z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-                    Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
+
+                    if z <= 0:
+                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
+                    else: 
+                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
+                    
 
                     k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
 
                     So = round(XRL + (k * sigma_RL))
 
-                    To = round(to * 100)
+                    To = to * 100
                     s = round(Qp)
                     S = round(Sp + Qp)
 
@@ -1037,8 +1056,10 @@ def periodic_view(request):
 
                     Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
                     z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-                    Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-
+                    if z <= 0:
+                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
+                    else: 
+                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
                     k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
 
                     So = round(XRL + (k * sigma_RL))
