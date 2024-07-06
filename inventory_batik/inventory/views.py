@@ -748,7 +748,7 @@ def export_view(request):
         writer = csv.writer(response)
         writer.writerow(['Sales Data'])
         writer.writerow(['No', 'Nama Barang','Biaya Pesan','Permintaan Bahan Baku','Biaya Simpan','Biaya Kekurangan','Harga Produk','Lead Time Pemenuhan', 'Standar Deviasi'])
-        items = Item.objects.filter(type="JADI").all()
+        items = Item.objects.filter(type="JADI", user_id=user_id).all()
         for idx, item in enumerate(items):
             sales = Sales.objects.filter(user_id=user_id).filter(item_id=item.id)
 
