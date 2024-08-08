@@ -1,4 +1,5 @@
 from django.forms import ModelForm
+from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from .models import *
@@ -22,6 +23,10 @@ class OutletForm(ModelForm):
             'address': {
                 'required': _("Alamat outlet harus diisi."),
             },
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Gudang A', 'class': 'form-control'}),
+            'address': forms.TextInput(attrs={'placeholder': 'Jl. Ahmad Yani No. 34', 'class': 'form-control'}),
         }
 
 class ItemForm(ModelForm):
@@ -64,6 +69,14 @@ class ItemForm(ModelForm):
                 'required': _("Lead Time pemenuhan item harus diisi."),
             },
         }
+        widgets = {
+            'code': forms.TextInput(attrs={'placeholder': 'KTN-001', 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'placeholder': 'Katun Grade A', 'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'placeholder': 'Kain katun dengan kualitas tingkat tinggi', 'class': 'form-control'}),
+            'price': forms.TextInput(attrs={'placeholder': '100000', 'class': 'form-control'}),
+            'biaya_pesan': forms.TextInput(attrs={'placeholder': '12000', 'class': 'form-control'}),
+            'lead_time': forms.TextInput(attrs={'placeholder': '2', 'class': 'form-control'}),
+        }
 
 class MaterialForm(ModelForm):
     class Meta:
@@ -78,8 +91,8 @@ class MaterialForm(ModelForm):
             'description': _('Deskripsi Item'),
             'price': _('Harga Item'),
             'unit': _('Unit Item'),
-            'biaya_pesan': _('Biaya Pesan Item'),
-            'lead_time': _('Lead Time Pemenuhan Item'),
+            'biaya_pesan': _('Biaya Pesan Item (transportasi, internet, dll.)'),
+            'lead_time': _('Lead Time Pemenuhan Item (Druasi pemesanan)'),
         }
         # mengatur teks pesan error untuk setiap validasi fieldnya
         error_messages = {
@@ -105,6 +118,14 @@ class MaterialForm(ModelForm):
                 'required': _("Lead Time pemenuhan item harus diisi."),
             },
         }
+        widgets = {
+            'code': forms.TextInput(attrs={'placeholder': 'P001', 'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'placeholder': 'Pewarna Merah A', 'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'placeholder': 'Pewarna  merah 1 liter', 'class': 'form-control'}),
+            'price': forms.TextInput(attrs={'placeholder': '50000', 'class': 'form-control'}),
+            'biaya_pesan': forms.TextInput(attrs={'placeholder': '4000', 'class': 'form-control'}),
+            'lead_time': forms.TextInput(attrs={'placeholder': '2', 'class': 'form-control'}),
+        }
 
 class PurchaseForm(ModelForm):
     class Meta:
@@ -112,7 +133,7 @@ class PurchaseForm(ModelForm):
         fields = ('outlet', 'item', 'price', 'amount', 'unit')
         labels = {
             'outlet': _('Pilih Outlet'),
-            'Item': _('Pilih Barang'),
+            'item': _('Pilih Barang'),
             'price': _('Total Harga Pembelian'),
             'amount': _('Jumlah Pembelian'),
             'unit': _('Satuan Barang'),
@@ -134,6 +155,10 @@ class PurchaseForm(ModelForm):
                 'required': _("Tipe item harus diisi."),
             },
         }
+        widgets = {
+            'price': forms.TextInput(attrs={'placeholder': '50000', 'class': 'form-control'}),
+            'amount': forms.TextInput(attrs={'placeholder': '10', 'class': 'form-control'}),
+        }
 
 class ProductionForm(ModelForm):
     class Meta:
@@ -141,7 +166,7 @@ class ProductionForm(ModelForm):
         fields = ('outlet', 'item', 'amount')
         labels = {
             'outlet': _('Pilih Outlet'),
-            'Item': _('Pilih Barang'),
+            'item': _('Pilih Barang'),
             'amount': _('Jumlah Produksi'),
         }
         error_messages = {
@@ -155,6 +180,9 @@ class ProductionForm(ModelForm):
                 'required': _("Jumlah item harus diisi."),
             },
         }
+        widgets = {
+            'amount': forms.TextInput(attrs={'placeholder': '100', 'class': 'form-control'}),
+        }
 
 class SalesForm(ModelForm):
     class Meta:
@@ -162,9 +190,9 @@ class SalesForm(ModelForm):
         fields = ('outlet', 'item', 'price', 'amount', 'unit')
         labels = {
             'outlet': _('Pilih Outlet'),
-            'Item': _('Pilih Barang'),
+            'item': _('Pilih Barang'),
             'price': _('Harga Jual'),
-            'amount': _('Total Nominal Transaksi'),
+            'amount': _('Jumlah'),
             'unit': _('Satuan Barang'),
         }
         error_messages = {
@@ -183,6 +211,10 @@ class SalesForm(ModelForm):
             'type': {
                 'required': _("Tipe item harus diisi."),
             },
+        }
+        widgets = {
+            'price': forms.TextInput(attrs={'placeholder': '120000', 'class': 'form-control'}),
+            'amount': forms.TextInput(attrs={'placeholder': '300', 'class': 'form-control'}),
         }
 
 class TransactionForm(ModelForm):
@@ -210,4 +242,7 @@ class RecipeForm(ModelForm):
             'amount': {
                 'required': _("Jumlah item harus diisi."),
             },
+        }
+        widgets = {
+            'amount': forms.TextInput(attrs={'placeholder': '10', 'class': 'form-control'}),
         }

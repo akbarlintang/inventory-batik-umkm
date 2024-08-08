@@ -13,10 +13,11 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Purchases Form</h1>
+        <h1>Formulir Pembelian</h1>
 
-        <div>
-            <a href="{% url 'purchase.index' %}" class="btn btn-success">Back to List</a>
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menambahkan informasi data pembelian masing-masing produk/bahan yang dimiliki.
         </div>
 
         <br>
@@ -63,7 +64,10 @@
                 </div>
                 {% endfor %}
     
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <div class="d-flex pt-3">
+                    <a href="{% url 'purchase.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Kembali</a>
+                    <button type="submit" class="btn btn-success">Simpan<i class="fa fa-chevron-circle-right ml-1"></i></button>
+                </div>
             </form>
         </div>
 </div>

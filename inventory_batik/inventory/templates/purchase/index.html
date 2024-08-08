@@ -14,6 +14,10 @@
 <div class="pt-5">
     <div class="container">
         <h1>Daftar Pembelian</h1>
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menampilkan data pembelian masing-masing produk/bahan yang dimiliki.
+        </div>
 
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
         <div>
@@ -32,7 +36,7 @@
         </div>
 
         <div class="text-right">
-            <a href="{% url 'purchase.create' %}" class="btn btn-success">Tambah Baru</a>
+            <a href="{% url 'purchase.create' %}" class="btn btn-success" data-toggle="tooltip" title="Tambah"><i class="fa fa-plus mr-1"></i> Tambah</a>
         </div>
 
         <br>
@@ -66,9 +70,9 @@
                     <td class="text-right">{{ purchase.amount }} {{ purchase.unit }}</td>
                     <td class="text-center">
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
-                        <a href="{% url 'purchase.update' purchase.id %}" class="btn btn-warning btn-sm"><i
+                        <a href="{% url 'purchase.update' purchase.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i
                                 class="fa fa-edit"></i></a>
-                        <a href="{% url 'purchase.delete' purchase.id %}" class="btn btn-danger btn-sm"
+                        <a href="{% url 'purchase.delete' purchase.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Hapus"
                             onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i
                                 class="fa fa-trash"></i></a>
                     </td>

@@ -14,6 +14,10 @@
 <div class="pt-5">
     <div class="container">
         <h1>Daftar Produk</h1>
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menampilkan data barang/produk yang dimiliki.
+        </div>
 
         <!-- blok untuk menampilkan notifikasi pesan sukses -->
         <div>
@@ -32,7 +36,7 @@
         </div>
 
         <div class="text-right">
-            <a href="{% url 'product.create' %}" class="btn btn-success">Tambah Baru</a>
+            <a href="{% url 'product.create' %}" class="btn btn-success" data-toggle="tooltip" title="Tambah"><i class="fa fa-plus mr-1"></i>Tambah</a>
         </div>
 
         <br>
@@ -59,11 +63,11 @@
                     <td>{{ item.description }}</td>
                     <td class="text-right">Rp {{ item.price }}</td>
                     <td class="text-center">
-                        <a href="{% url 'product.recipe.index' item.id %}" class="btn btn-primary btn-sm"><i
+                        <a href="{% url 'product.recipe.index' item.id %}" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Resep"><i
                                 class="fa fa-file"></i></a>
-                        <a href="{% url 'product.update' item.id %}" class="btn btn-warning btn-sm"><i
+                        <a href="{% url 'product.update' item.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i
                                 class="fa fa-edit"></i></a>
-                        <a href="{% url 'product.delete' item.id %}" class="btn btn-danger btn-sm"
+                        <a href="{% url 'product.delete' item.id %}" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Hapus"
                             onclick="return confirm('Apakah yakin akan menghapus item ini?')"><i
                                 class="fa fa-trash"></i></a>
                     </td>

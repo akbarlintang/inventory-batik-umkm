@@ -13,7 +13,12 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Sales Form</h1>
+        <h1>Formulir Penjualan</h1>
+
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menambahkan informasi data pembelian masing-masing produk yang dimiliki.
+        </div>
 
         <br>
 
@@ -59,12 +64,10 @@
                 </div>
                 {% endfor %}
 
-                <span>
-                    <a href="{% url 'sales.index' %}" class="btn btn-danger">Kembali</a>
-                </span>
-                <span class="float-right">
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </span>
+                <div class="d-flex mb-3">
+                    <a href="{% url 'sales.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Kembali</a>
+                    <button type="submit" class="btn btn-success">Simpan<i class="fa fa-chevron-circle-right ml-1"></i></button>
+                </div>
             </form>
         </div>
 </div>

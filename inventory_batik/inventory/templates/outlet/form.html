@@ -13,10 +13,11 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Outlet Form</h1>
+        <h1>Formulir Outlet</h1>
 
-        <div>
-            <a href="{% url 'outlet.index' %}" class="btn btn-success">Back to List</a>
+        <div class="alert alert-primary" role="alert">
+            <i class="fa fa-info-circle mr-1"></i>
+            Menu ini digunakan untuk menambahkan informasi data outlet/cabang yang terpilih.
         </div>
 
         <br>
@@ -43,27 +44,30 @@
                     {{ field.label_tag }}
     
                     {% if form.is_bound %}
-                    {% if field.errors %}
-                        {% render_field field class="form-control is-invalid" %}
-                        {% for error in field.errors %}
-                        <div class="invalid-feedback">
-                            {{ error }}
-                        </div>
-                        {% endfor %}
+                        {% if field.errors %}
+                            {% render_field field class="form-control is-invalid" %}
+                            {% for error in field.errors %}
+                            <div class="invalid-feedback">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            {% render_field field class="form-control is-valid" %}
+                        {% endif %}
                     {% else %}
-                        {% render_field field class="form-control is-valid" %}
-                    {% endif %}
-                    {% else %}
-                    {% render_field field class="form-control" %}
+                        {% render_field field class="form-control" %}
                     {% endif %}
     
                     {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
                     {% endif %}
                 </div>
                 {% endfor %}
     
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <div class="d-flex pt-3">
+                    <a href="{% url 'outlet.index' %}" class="btn btn-danger"><i class="fa fa-arrow-left mr-1"></i>Kembali</a>
+                    <button type="submit" class="btn btn-success">Simpan<i class="fa fa-chevron-circle-right ml-1"></i></button>
+                </div>
             </form>
         </div>
 </div>
