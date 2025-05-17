@@ -7,11 +7,13 @@
 
 {% load static %}
 
+{% load humanize %}
+
 {% endblock stylesheets %}
 
 {% block content %}
 
-<div class="pt-5">
+<div class="py-5">
     <div class="container">
         <h1>Daftar Produksi</h1>
         <div class="alert alert-primary" role="alert">
@@ -41,13 +43,46 @@
 
         <br>
 
+        <form method="get" action="{% url 'production.index' %}">
+            <div class="row">
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="selected_outlet">Outlet</label>
+                        <select name="selected_outlet" id="selected_outlet" class="form-control base-select2">
+                            <option value="">Semua</option>
+                            {% for outlet in outlets %}
+                                <option value="{{ outlet.id }}" {% if outlet.id == selected_outlet|add:"0" %}selected{% endif %}>{{ outlet.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" id="start_date" value="{{ start_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="end_date">End Date</label>
+                        <input type="date" name="end_date" class="form-control" id="end_date" value="{{ end_date|date:'Y-m-d' }}">
+                    </div>
+                </div>
+
+                <div class="col-3 my-auto">
+                    <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                </div>
+            </div>
+        </form>
+
         <table class="table table-bordered table-striped" id="datatable">
             <thead>
                 <tr>
                     <th width="5%" class="text-center">ID</th>
-                    {% if request.session.outlet_id == 'all' %}
                     <th class="text-center">Lokasi Outlet</th>
-                    {% endif %}
+                    <th class="text-center">Tanggal</th>
                     <th class="text-center">Kode Item</th>
                     <th class="text-center">Nama</th>
                     <th class="text-center">Jumlah</th>
@@ -60,12 +95,11 @@
                 {% for production in productions%}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
-                    {% if request.session.outlet_id == 'all' %}
                     <td>{{ production.outlet.name }}</td>
-                    {% endif %}
+                    <td class="text-center">{{ production.created_at|date:"d F Y" }}</td>
                     <td>{{ production.item.code }}</td>
                     <td>{{ production.item.name }}</td>
-                    <td class="text-right">{{ production.amount }} {{ production.unit }}</td>
+                    <td class="text-right">{{ production.amount|intcomma }} {{ production.unit }}</td>
                     <td class="text-center">
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
                         <a href="{% url 'production.update' production.id %}" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Edit"><i

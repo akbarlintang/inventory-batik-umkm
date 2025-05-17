@@ -47,30 +47,30 @@
               <span class="nav-link-text">Purchases</span>
             </a>
           </li>
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a class="nav-link {% if 'production' in request.path %} active {% endif %}"
               href="{% url 'production.index' %}">
               <i class="ni ni-archive-2 text-yellow"></i>
               <span class="nav-link-text">Productions</span>
             </a>
-          </li>
+          </li> -->
           <li class="nav-item">
             <a class="nav-link {% if 'sales' in request.path %} active {% endif %}" href="{% url 'sales.index' %}">
               <i class="ni ni-bag-17 text-green"></i>
               <span class="nav-link-text">Sales</span>
             </a>
           </li>
-<!--           <li class="nav-item">
+          <li class="nav-item">
             <a class="nav-link {% if 'stock' in request.path %} active {% endif %}" href="{% url 'stock.index' %}">
               <i class="ni ni-chart-pie-35 text-red"></i>
               <span class="nav-link-text">Stocks</span>
             </a>
-          </li> -->
+          </li>
           <li class="nav-item">
             <a class="nav-link {% if 'transaction' in request.path %} active {% endif %}"
               href="{% url 'transaction.index' %}">
               <i class="ni ni-chart-bar-32 text-purple"></i>
-              <span class="nav-link-text">Transaction</span>
+              <span class="nav-link-text">Transactions</span>
             </a>
           </li>
 

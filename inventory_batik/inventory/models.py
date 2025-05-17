@@ -93,7 +93,6 @@ class Stock(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     amount = models.IntegerField()
-    user_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -31,6 +31,7 @@ import math
 from statistics import NormalDist
 from scipy.stats import norm
 from statistics import stdev
+from datetime import datetime
 
 from django.shortcuts import redirect
 
@@ -91,7 +92,7 @@ def login_view(request):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            return render(request, 'login.html', {'error': 'Username tidak ditemukan'})
+            return render(request, 'auth/login.html', {'error': 'Username tidak ditemukan'})
 
         user = authenticate(request, username=username, password=password)
         if user is not None:
@@ -448,6 +449,7 @@ def product_recipe_delete_view(request, product_id, material_id):
 # Purchase
 @login_required
 def purchase_view(request):
+    outlets         = Outlet.objects.all()
     user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
@@ -456,8 +458,38 @@ def purchase_view(request):
             purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
     else:
         purchases = Purchase.objects.filter(user_id=user_id)
+
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Filter by outlet and date range if provided
+    if selected_outlet:
+        try:
+            purchases = purchases.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            purchases = purchases.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            purchases = purchases.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
     context = {
-        'purchases': purchases
+        'purchases': purchases,
+        'outlets': outlets,
+        'selected_outlet': selected_outlet,
+        'start_date': start_date,
+        'end_date': end_date
     }
 
     return render(request, 'purchase/index.html', context)
@@ -483,6 +515,18 @@ def purchase_create_view(request):
                 user_id = user_id,
                 type = 'purchase'
             )
+
+            # Simpan stock dari sales
+            try:
+                obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
+                obj.amount = int(obj.amount) + int(request.POST.get('amount',''))
+                obj.save()
+            except Stock.DoesNotExist:
+                Stock.objects.create(
+                    item_id = request.POST.get('item',''),
+                    outlet_id = request.POST.get('outlet',''),
+                    amount = request.POST.get('amount',''),
+                )
 
             messages.success(request, 'Sukses menambah pembelian baru.')
             return redirect('purchase.index')
@@ -518,6 +562,7 @@ def purchase_delete_view(request, purchase_id):
 # Production
 @login_required
 def production_view(request):
+    outlets         = Outlet.objects.all()
     user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
@@ -527,8 +572,37 @@ def production_view(request):
     else:
         productions = Production.objects.filter(user_id=user_id)
 
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Filter by outlet and date range if provided
+    if selected_outlet:
+        try:
+            productions = productions.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            productions = productions.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            productions = productions.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
     context = {
-        'productions': productions
+        'productions': productions,
+        'outlets': outlets,
+        'selected_outlet': selected_outlet,
+        'start_date': start_date,
+        'end_date': end_date
     }
 
     return render(request, 'production/index.html', context)
@@ -608,6 +682,7 @@ def production_delete_view(request, production_id):
 # Sales
 @login_required
 def sales_view(request):
+    outlets         = Outlet.objects.all()
     user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
@@ -617,8 +692,37 @@ def sales_view(request):
     else:
         sales = Sales.objects.filter(user_id=user_id)
 
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Filter by outlet and date range if provided
+    if selected_outlet:
+        try:
+            sales = sales.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            sales = sales.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            sales = sales.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
     context = {
-        'sales': sales
+        'sales': sales,
+        'outlets': outlets,
+        'selected_outlet': selected_outlet,
+        'start_date': start_date,
+        'end_date': end_date
     }
 
     return render(request, 'sales/index.html', context)
@@ -629,7 +733,7 @@ def sales_create_view(request):
     if request.method == 'POST':
         form = SalesForm(request.POST)
         if form.is_valid():
-             # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
+            # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
             temp = form.save(commit=False)
             # Tambahkan user_id dari pengguna yang sedang terautentikasi
             temp.user_id = user_id
@@ -645,7 +749,7 @@ def sales_create_view(request):
                 user_id = user_id
             )
 
-            # Simpan stock dari production
+            # Simpan stock dari sales
             try:
                 obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
                 obj.amount = int(obj.amount) - int(request.POST.get('amount',''))
@@ -654,8 +758,7 @@ def sales_create_view(request):
                 Stock.objects.create(
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
-                    amount = request.POST.get('amount',''),
-                    user_id = user_id
+                    amount = -int(request.POST.get('amount', '0')),
                 )
 
             messages.success(request, 'Sukses menambah penjualan baru.')
@@ -705,6 +808,7 @@ def sales_delete_view(request, sales_id):
 # Transaction
 @login_required
 def transaction_view(request):
+    outlets         = Outlet.objects.all()
     user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
@@ -713,9 +817,38 @@ def transaction_view(request):
             transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
     else:
         transactions = Transaction.objects.filter(user_id=user_id)
-    
+
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Filter by outlet and date range if provided
+    if selected_outlet:
+        try:
+            transactions = transactions.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            transactions = transactions.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            transactions = transactions.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
     context = {
-        'transactions': transactions
+        'transactions': transactions,
+        'outlets': outlets,
+        'selected_outlet': selected_outlet,
+        'start_date': start_date,
+        'end_date': end_date
     }
 
     return render(request, 'transaction/index.html', context)
@@ -723,17 +856,28 @@ def transaction_view(request):
 # Stocks
 @login_required
 def stock_view(request):
+    outlets         = Outlet.objects.all()
     user_id         = request.user.id
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            stocks = Stock.objects.filter(user_id=user_id)
+            stocks = Stock.objects.all()
         else:
-            stocks = Stock.objects.filter(user_id=user_id)
+            stocks = Stock.objects.all()
     else:
-        stocks = Stock.objects.filter(user_id=user_id)
-    
+        stocks = Stock.objects.all()
+
+    selected_outlet = request.GET.get('selected_outlet')
+
+    # Filter by outlet and date range if provided
+    if selected_outlet:
+        try:
+            stocks = stocks.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
     context = {
-        'stocks': stocks
+        'stocks': stocks,
+        'outlets': outlets,
     }
 
     return render(request, 'stock/index.html', context)
