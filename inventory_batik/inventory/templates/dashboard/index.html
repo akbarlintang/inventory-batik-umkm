@@ -2,7 +2,13 @@
 
 {% block title %} Dashboard {% endblock title %}
 
-{% block stylesheets %}{% endblock stylesheets %}
+{% block stylesheets %}
+<style>
+  .chart{
+    height: auto;
+  }
+</style>
+{% endblock stylesheets %}
 
 {% block content %}
 
@@ -105,13 +111,31 @@
         <div class="row align-items-center">
           <div class="col">
             <h6 class="my-2 text-muted text-uppercase ls-1">Ringkasan</h6>
-            <h5 class="h5 mb-0">Diagram Penjualan Bulan ini</h5>
+            <h5 class="h5 mb-0">Diagram Pembelian Bulan ini</h5>
           </div>
         </div>
       </div>
       <div class="card-body">
         <div class="chart">
-          <canvas id="salesChart" width="400" height="200"></canvas>
+          <canvas id="purchaseChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-xl-12">
+        <div class="card-header bg-transparent">
+          <div class="row align-items-center">
+            <div class="col">
+              <h6 class="my-2 text-muted text-uppercase ls-1">Ringkasan</h6>
+              <h5 class="h5 mb-0">Diagram Penjualan Bulan ini</h5>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="chart">
+            <canvas id="salesChart" width="400" height="200"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -134,6 +158,32 @@
 
 <script>
   // Gunakan JavaScript untuk mengambil data dari endpoint API
+  fetch('/api/get-purchases-data/')
+    .then(response => response.json())
+    .then(data => {
+      // Gunakan Chart.js untuk membuat diagram batang
+      const purchaseCtx = document.getElementById('purchaseChart').getContext('2d');
+      new Chart(purchaseCtx, {
+        type: 'bar',
+        data: {
+          labels: data.item_names,
+          datasets: [{
+            label: 'Jumlah Pembelian',
+            data: data.purchases_counts,
+            backgroundColor: 'Green',
+          }],
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    });
+
+    // Gunakan JavaScript untuk mengambil data dari endpoint API
   fetch('/api/get-sales-data/')
     .then(response => response.json())
     .then(data => {

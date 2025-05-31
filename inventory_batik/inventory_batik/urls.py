@@ -33,7 +33,7 @@ urlpatterns = [
     path('', dashboard_view, name='dashboard'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('api/get-sales-data/', get_sales_data, name='get-sales-data'),
-    path('api/get_purchase_data/', get_purchase_data, name='get_purchase_data'),
+    path('api/get-purchases-data/', get_purchase_data, name='get-purchases-data'),
     
     # Outlet
     path('outlet/', outlet_view, name='outlet.index'),
@@ -48,12 +48,14 @@ urlpatterns = [
     path('material/create', material_create_view, name='material.create'),
     path('material/update/<int:material_id>', material_update_view, name='material.update'),
     path('material/delete/<int:material_id>', material_delete_view, name='material.delete'),
+    path('material/export/', material_export_to_excel, name='material.export'),
 
     # Product
     path('product/', product_view, name='product.index'),
     path('product/create', product_create_view, name='product.create'),
     path('product/update/<int:product_id>', product_update_view, name='product.update'),
     path('product/delete/<int:product_id>', product_delete_view, name='product.delete'),
+    path('product/export/', product_export_to_excel, name='product.export'),
 
     # Product recipe
     path('product/recipe/<int:product_id>', product_recipe_view, name='product.recipe.index'),
@@ -65,6 +67,7 @@ urlpatterns = [
     path('purchase/create', purchase_create_view, name='purchase.create'),
     path('purchase/update/<int:purchase_id>', purchase_update_view, name='purchase.update'),
     path('purchase/delete/<int:purchase_id>', purchase_delete_view, name='purchase.delete'),
+    path('purchase/export/', purchase_export_to_excel, name='purchase.export'),
 
     # Production
     path('production/', production_view, name='production.index'),
@@ -77,12 +80,15 @@ urlpatterns = [
     path('sales/create', sales_create_view, name='sales.create'),
     path('sales/update/<int:sales_id>', sales_update_view, name='sales.update'),
     path('sales/delete/<int:sales_id>', sales_delete_view, name='sales.delete'),
+    path('sales/export/', sales_export_to_excel, name='sales.export'),
 
     # Stocks
     path('stock/', stock_view, name='stock.index'),
+    path('stock/export/', stock_export_to_excel, name='stock.export'),
 
     # Transaction
     path('transaction/', transaction_view, name='transaction.index'),
+    path('transaction/export/', transaction_export_to_excel, name='transaction.export'),
 
     # Export
     path('export/', export_view, name='export.index'),

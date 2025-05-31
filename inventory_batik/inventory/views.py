@@ -32,6 +32,8 @@ from statistics import NormalDist
 from scipy.stats import norm
 from statistics import stdev
 from datetime import datetime
+from openpyxl import Workbook
+from django.utils.timezone import localtime
 
 from django.shortcuts import redirect
 
@@ -170,10 +172,14 @@ def get_purchase_data(request):
     # Filter data pembelian hanya untuk bulan ini
     purchases = Purchase.objects.filter(created_at__gte=start_of_month, created_at__lt=start_of_next_month)
 
-    # Hitung jumlah pembelian per item
-    purchase_counts = purchases.values('item__name').annotate(count=Count('item'))
+    item_purchases_count = {}
 
-    data = {'purchase_data': list(purchase_counts)}
+    for purchase in purchases:
+        item_id = purchase.item_id
+        item_name = purchase.item.name  # Sesuaikan dengan struktur model Anda
+        item_purchases_count[item_name] = item_purchases_count.get(item_name, 0) + int(purchase.amount)
+
+    data = {'item_names': list(item_purchases_count.keys()), 'purchases_counts': list(item_purchases_count.values())}
     return JsonResponse(data)
 
 # Outlet
@@ -336,7 +342,42 @@ def material_delete_view(request, material_id):
         return redirect('material.index')
     except Material.DoesNotExist:
         raise Http404("Material tidak ditemukan.")
+
+def material_export_to_excel(request):
+    user_id = request.user.id
+
+    # Build queryset with filters
+    materials = Material.objects.filter(user_id=user_id)
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Kode Item", "Nama", "Deskripsi", "Harga"]
+    ws.append(headers)
+
+    # Write data rows
+    for index, material in enumerate(materials, start=1):
+        ws.append([
+            index,
+            material.code,
+            material.name,
+            material.description,
+            material.price,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="material_export.xlsx"'
     
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
 # Product
 @login_required
 def product_view(request):
@@ -399,7 +440,42 @@ def product_delete_view(request, product_id):
         return redirect('product.index')
     except Item.DoesNotExist:
         raise Http404("Item tidak ditemukan.")
+
+def product_export_to_excel(request):
+    user_id = request.user.id
+
+    # Build queryset with filters
+    products = Item.objects.filter(user_id=user_id)
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Kode Item", "Nama", "Deskripsi", "Harga"]
+    ws.append(headers)
+
+    # Write data rows
+    for index, product in enumerate(products, start=1):
+        ws.append([
+            index,
+            product.code,
+            product.name,
+            product.description,
+            product.price,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="product_export.xlsx"'
     
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
 # Product recipe
 @login_required
 def product_recipe_view(request, product_id):
@@ -558,6 +634,68 @@ def purchase_delete_view(request, purchase_id):
         return redirect('purchase.index')
     except Purchase.DoesNotExist:
         raise Http404("Pembelian tidak ditemukan.")
+
+def purchase_export_to_excel(request):
+    # Get filter parameters
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Build queryset with filters
+    purchases = Purchase.objects.all()
+
+    if selected_outlet:
+        try:
+            purchases = purchases.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            purchases = purchases.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            purchases = purchases.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Outlet", "Tanggal", "Kode Item", "Nama", "Harga Beli", "Jumlah"]  # Customize based on your model
+    ws.append(headers)
+
+    # Write data rows
+    for index, purchase in enumerate(purchases, start=1):
+        created_at_formatted = localtime(sale.created_at).strftime('%d %B %Y')
+
+        ws.append([
+            index,
+            purchase.outlet.name,
+            created_at_formatted,
+            purchase.item.code,
+            purchase.item.name,
+            purchase.price,
+            purchase.amount,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="purchase_export.xlsx"'
+    
+    # Save the workbook to the response
+    wb.save(response)
+    return response
 
 # Production
 @login_required
@@ -805,6 +943,70 @@ def sales_delete_view(request, sales_id):
     except Sales.DoesNotExist:
         raise Http404("Penjualan tidak ditemukan.")
 
+def sales_export_to_excel(request):
+    user_id = request.user.id
+
+    # Get filter parameters
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Build queryset with filters
+    sales = Sales.objects.filter(user_id=user_id)
+
+    if selected_outlet:
+        try:
+            sales = sales.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            sales = sales.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            sales = sales.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Outlet", "Tanggal", "Kode Item", "Nama", "Harga Beli", "Jumlah"]
+    ws.append(headers)
+
+    # Write data rows
+    for index, sale in enumerate(sales, start=1):
+        created_at_formatted = localtime(sale.created_at).strftime('%d %B %Y')
+
+        ws.append([
+            index,
+            sale.outlet.name,
+            created_at_formatted,
+            sale.item.code,
+            sale.item.name,
+            sale.price,
+            sale.amount,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="sales_export.xlsx"'
+    
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
 # Transaction
 @login_required
 def transaction_view(request):
@@ -853,6 +1055,74 @@ def transaction_view(request):
 
     return render(request, 'transaction/index.html', context)
 
+def transaction_export_to_excel(request):
+    user_id = request.user.id
+
+    # Get filter parameters
+    selected_outlet = request.GET.get('selected_outlet')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    # Build queryset with filters
+    transactions = Transaction.objects.filter(user_id=user_id)
+
+    if selected_outlet:
+        try:
+            transactions = transactions.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if start_date:
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')  # Convert to datetime
+            transactions = transactions.filter(created_at__gte=start_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    if end_date:
+        try:
+            end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            transactions = transactions.filter(created_at__lte=end_date)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Outlet", "Tanggal", "Kode Item", "Nama", "Tipe Transaksi", "Masuk", "Keluar"]
+    ws.append(headers)
+
+    # Write data rows
+    for index, transaction in enumerate(transactions, start=1):
+        created_at_formatted = localtime(transaction.created_at).strftime('%d %B %Y')
+        transaction_type = 'Pembelian' if transaction.type == 'purchase' else 'Penjualan'
+        purchase_amount = transaction.purchase.amount if transaction.type == 'purchase' else '-'
+        sales_amount = '-' if transaction.type == 'purchase' else transaction.sales.amount
+
+        ws.append([
+            index,
+            transaction.outlet.name,
+            created_at_formatted,
+            transaction.item.code,
+            transaction.item.name,
+            transaction_type,
+            purchase_amount,
+            sales_amount,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="transaction_export.xlsx"'
+    
+    # Save the workbook to the response
+    wb.save(response)
+    return response
+
 # Stocks
 @login_required
 def stock_view(request):
@@ -878,9 +1148,52 @@ def stock_view(request):
     context = {
         'stocks': stocks,
         'outlets': outlets,
+        'selected_outlet': selected_outlet
     }
 
     return render(request, 'stock/index.html', context)
+
+def stock_export_to_excel(request):
+    # Get filter parameters
+    selected_outlet = request.GET.get('selected_outlet')
+
+    # Build queryset with filters
+    stocks = Stock.objects.all()
+
+    if selected_outlet:
+        try:
+            stocks = stocks.filter(outlet_id=selected_outlet)
+        except ValueError:
+            pass  # Handle invalid date format if necessary
+
+    # Create a workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Data Export"
+
+    # Write headers
+    headers = ["#", "Outlet", "Kode Item", "Nama", "Stok"]  # Customize based on your model
+    ws.append(headers)
+
+    # Write data rows
+    for index, stock in enumerate(stocks, start=1):
+        ws.append([
+            index,
+            stock.outlet.name,
+            stock.item.code,
+            stock.item.name,
+            stock.amount,
+        ])
+
+    # Create HTTP response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="stock_export.xlsx"'
+    
+    # Save the workbook to the response
+    wb.save(response)
+    return response
 
 # Export
 @login_required

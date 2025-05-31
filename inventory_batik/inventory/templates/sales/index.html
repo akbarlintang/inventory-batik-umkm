@@ -73,6 +73,7 @@
 
                 <div class="col-3 my-auto">
                     <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                    <a href="{% url 'sales.export' %}?selected_outlet={{ selected_outlet }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-success">Export <i class="fa fa-file-excel"></i></a>
                 </div>
             </div>
         </form>

@@ -51,6 +51,7 @@
 
                 <div class="col-3 my-auto">
                     <button type="submit" class="btn btn-primary">Filter <i class="fa fa-filter"></i></button>
+                    <a href="{% url 'stock.export' %}?selected_outlet={{ selected_outlet }}" class="btn btn-success">Export <i class="fa fa-file-excel"></i></a>
                 </div>
             </div>
         </form>
