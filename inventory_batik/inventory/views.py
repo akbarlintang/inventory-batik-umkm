@@ -419,7 +419,7 @@ def product_recipe_create_view(request, product_id):
     # proses validasi dan penyimpanan data
     if request.method == 'POST':
         # membuat objek dari class TaskForm
-        form = RecipeForm(request.POST, request.FILES)
+        form = RecipeForm(request.POST, request.FILES, user=request.user.id)
         # Mengecek validasi form
         if form.is_valid():
             # Membuat Task baru dengan data yang disubmit
@@ -433,7 +433,7 @@ def product_recipe_create_view(request, product_id):
     # Jika method-nya bukan POST
     else:
         # membuat objek dari class TaskForm
-        form = RecipeForm()
+        form = RecipeForm(user=request.user.id)
     # merender template form dengan memparsing data form
     return render(request, 'product_recipe/form.html', {'form': form, 'product_id': product_id})
 
@@ -449,8 +449,8 @@ def product_recipe_delete_view(request, product_id, material_id):
 # Purchase
 @login_required
 def purchase_view(request):
-    outlets         = Outlet.objects.all()
     user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
             purchases = Purchase.objects.filter(user_id=user_id).order_by('-created_at')
@@ -525,7 +525,8 @@ def purchase_create_view(request):
                 Stock.objects.create(
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
-                    amount = request.POST.get('amount',''),
+                    amount = request.POST.get('amount','0'),
+                    user_id = user_id,
                 )
 
             messages.success(request, 'Sukses menambah pembelian baru.')
@@ -562,8 +563,8 @@ def purchase_delete_view(request, purchase_id):
 # Production
 @login_required
 def production_view(request):
-    outlets         = Outlet.objects.all()
     user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
             productions = Production.objects.filter(user_id=user_id).order_by('-created_at')
@@ -629,7 +630,7 @@ def production_create_view(request):
                 Stock.objects.create(
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
-                    amount = request.POST.get('amount',''),
+                    amount = request.POST.get('amount','0'),
                     user_id = user_id
                 )
 
@@ -661,7 +662,8 @@ def production_update_view(request, production_id):
                 Stock.objects.create(
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
-                    amount = request.POST.get('amount',''),
+                    amount = request.POST.get('amount','0'),
+                    user_id = user_id,
                 )
             
             messages.success(request, 'Sukses Mengubah Produksi.')
@@ -682,8 +684,8 @@ def production_delete_view(request, production_id):
 # Sales
 @login_required
 def sales_view(request):
-    outlets         = Outlet.objects.all()
     user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
             sales = Sales.objects.filter(user_id=user_id).order_by('-created_at')
@@ -759,6 +761,7 @@ def sales_create_view(request):
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
                     amount = -int(request.POST.get('amount', '0')),
+                    user_id = user_id,
                 )
 
             messages.success(request, 'Sukses menambah penjualan baru.')
@@ -788,6 +791,7 @@ def sales_update_view(request, sales_id):
                     item_id = request.POST.get('item',''),
                     outlet_id = request.POST.get('outlet',''),
                     amount = request.POST.get('amount',''),
+                    user_id = user_id,
                 )
 
             messages.success(request, 'Sukses Mengubah penjualan.')
@@ -808,8 +812,8 @@ def sales_delete_view(request, sales_id):
 # Transaction
 @login_required
 def transaction_view(request):
-    outlets         = Outlet.objects.all()
     user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
             transactions = Transaction.objects.filter(user_id=user_id).order_by('-created_at')
@@ -856,15 +860,15 @@ def transaction_view(request):
 # Stocks
 @login_required
 def stock_view(request):
-    outlets         = Outlet.objects.all()
     user_id         = request.user.id
+    outlets         = Outlet.objects.filter(user_id=user_id)
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            stocks = Stock.objects.all()
+            stocks = Stock.objects.filter(user_id=user_id)
         else:
-            stocks = Stock.objects.all()
+            stocks = Stock.objects.filter(user_id=user_id)
     else:
-        stocks = Stock.objects.all()
+        stocks = Stock.objects.filter(user_id=user_id)
 
     selected_outlet = request.GET.get('selected_outlet')
 

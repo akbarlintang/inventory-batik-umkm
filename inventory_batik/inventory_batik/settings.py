@@ -26,7 +26,14 @@ SECRET_KEY = 'django-insecure-ssu8x3#*3jntyjx@ztcve4w&0@8ts#*u$^tt=1wne0mdjd6r_t
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '103.175.216.137','http://inventorybatik.my.id','inventorybatik.my.id', '127.0.0.1', 'www.inventorybatik.my.id', 'http://127.0.0.1:8000','http://127.0.0.1'
+    '127.0.0.1',
+    'http://127.0.0.1:8000',
+    'http://127.0.0.1',
+    '103.127.98.232',
+    'http://inventorybatik.biz.id',
+    'https://inventorybatik.biz.id',
+    'inventorybatik.biz.id',
+    'www.inventorybatik.biz.id'
 ]
 
 # Application definition
@@ -89,7 +96,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'inventory_batik_pso',
         'USER': 'root',
-        'PASSWORD': '',
+        'PASSWORD': 'Es1234*#',
         'HOST':'localhost',
         'PORT':'3306',
         'OPTIONS': {
@@ -139,3 +146,8 @@ STATIC_URL = 'inventory/static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://inventorybatik.biz.id",
+    "https://www.inventorybatik.biz.id",
+]

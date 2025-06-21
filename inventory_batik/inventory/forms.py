@@ -246,3 +246,13 @@ class RecipeForm(ModelForm):
         widgets = {
             'amount': forms.TextInput(attrs={'placeholder': '10', 'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        # Pop 'user' from kwargs to use it in filtering
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            # Example: Filter outlet and material based on user
+            self.fields['outlet'].queryset = Outlet.objects.filter(user_id=user)
+            self.fields['material'].queryset = Material.objects.filter(user_id=user)

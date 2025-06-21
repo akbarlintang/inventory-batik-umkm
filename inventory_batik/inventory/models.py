@@ -91,6 +91,7 @@ class Production(models.Model):
 
 class Stock(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    user_id = models.IntegerField()
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     amount = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
