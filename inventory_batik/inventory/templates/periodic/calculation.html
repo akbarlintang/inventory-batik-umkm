@@ -58,7 +58,14 @@
                         <td class="text-right">Rp {{ dt.biaya_inventory|intcomma }}</td>
                         <td class="text-center">{{ dt.s }}</td>
                         <td class="text-center">{{ dt.S }}</td>
-                        <td class="text-center">{{ dt.To }}</td>
+                        <td class="text-center">
+                            {% if dt.To == 0 %}
+                                1
+                            {% else %}
+                                {{ dt.To }}
+                            {% endif %}
+                        </td>
+
                     </tr>
                     {% endfor %}
                     {% else %}

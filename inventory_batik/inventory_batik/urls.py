@@ -87,6 +87,13 @@ urlpatterns = [
     # Export
     path('export/', export_view, name='export.index'),
 
+    # Questionnaire
+    path('questionnaire/', questionnaire_view, name='questionnaire.index'),
+    path('questionnaire/isi/', questionnaire_isi_view, name='questionnaire.isi'),
+    path('questionnaire/detail/<int:respondent_id>', questionnaire_detail_view, name='questionnaire.detail'),
+    path('questionnaire/export/', questionnaire_export_view, name='questionnaire.export'),
+    path('questionnaire/sukses/', questionnaire_sukses_view, name='questionnaire.sukses'),
+
     # Periodic Review
     path('periodic/', periodic_view, name='periodic.index'),
 ]

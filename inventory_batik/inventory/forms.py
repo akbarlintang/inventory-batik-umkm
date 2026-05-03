@@ -4,6 +4,32 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import *
 
+USIA_CHOICES = [
+    ('< 18', '< 18'),
+    ('19 - 24', '19 - 24'),
+    ('25 - 34', '25 - 34'),
+    ('35 - 44', '35 - 44'),
+    ('45 - 54', '45 - 54'),
+    ('55 - 64', '55 - 64'),
+    ('> 65', '> 65'),
+]
+
+PENDIDIKAN_CHOICES = [
+    ('SD', 'SD'),
+    ('SMP', 'SMP'),
+    ('SMA', 'SMA'),
+    ('S1', 'S1'),
+    ('S2', 'S2'),
+    ('S3', 'S3'),
+]
+
+SKOR_CHOICES = [
+    (1, 'STS'),
+    (2, 'TS'),
+    (3, 'S'),
+    (4, 'SS'),
+]
+
 class OutletForm(ModelForm):
     class Meta:
         # merelasikan form dengan model
@@ -160,6 +186,16 @@ class PurchaseForm(ModelForm):
             'amount': forms.TextInput(attrs={'placeholder': '10', 'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        # Pop 'user' from kwargs to use it in filtering
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            # Example: Filter outlet and material based on user
+            self.fields['outlet'].queryset = Outlet.objects.filter(user_id=user)
+            self.fields['item'].queryset = Item.objects.filter(user_id=user)
+
 class ProductionForm(ModelForm):
     class Meta:
         model = Production
@@ -183,6 +219,16 @@ class ProductionForm(ModelForm):
         widgets = {
             'amount': forms.TextInput(attrs={'placeholder': '100', 'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        # Pop 'user' from kwargs to use it in filtering
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            # Example: Filter outlet and material based on user
+            self.fields['outlet'].queryset = Outlet.objects.filter(user_id=user)
+            self.fields['item'].queryset = Item.objects.filter(user_id=user)
 
 class SalesForm(ModelForm):
     class Meta:
@@ -216,6 +262,16 @@ class SalesForm(ModelForm):
             'price': forms.TextInput(attrs={'placeholder': '120000', 'class': 'form-control'}),
             'amount': forms.TextInput(attrs={'placeholder': '300', 'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        # Pop 'user' from kwargs to use it in filtering
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+        if user is not None:
+            # Example: Filter outlet and material based on user
+            self.fields['outlet'].queryset = Outlet.objects.filter(user_id=user)
+            self.fields['item'].queryset = Item.objects.filter(user_id=user)
 
 class TransactionForm(ModelForm):
     class Meta:
@@ -256,3 +312,131 @@ class RecipeForm(ModelForm):
             # Example: Filter outlet and material based on user
             self.fields['outlet'].queryset = Outlet.objects.filter(user_id=user)
             self.fields['material'].queryset = Material.objects.filter(user_id=user)
+
+class KuesionerForm(forms.Form):
+    nama = forms.CharField(
+        label='Nama',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': '',
+        })
+    )
+
+    usia = forms.ChoiceField(
+        label='Usia',
+        choices=USIA_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-radio',
+        })
+    )
+
+    pendidikan_terakhir = forms.ChoiceField(
+        label='Pendidikan Terakhir',
+        choices=PENDIDIKAN_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-radio',
+        })
+    )
+
+    address = forms.CharField(
+        label='Alamat',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': '',
+        })
+    )
+
+    umkm = forms.CharField(
+        label='Asal UMKM',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': '',
+        })
+    )
+
+    phone_number = forms.CharField(
+        label='Nomor HP',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': '',
+        })
+    )
+
+class RespondenForm(forms.Form):
+    nama             = forms.CharField(max_length=150)
+    usia = forms.ChoiceField(
+        label='Usia',
+        choices=USIA_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-radio',
+        })
+    )
+    pendidikan_terakhir = forms.ChoiceField(
+        label='Pendidikan Terakhir',
+        choices=PENDIDIKAN_CHOICES,
+        widget=forms.RadioSelect(attrs={
+            'class': 'form-radio',
+        })
+    )
+    umkm             = forms.CharField(max_length=200)
+    address = forms.CharField(
+        label='Alamat',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': '',
+        })
+    )
+    phone_number     = forms.CharField(max_length=20)
+
+    # PEOU items
+    PEOU_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PEOU_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PEOU_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PEOU_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PEOU_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # PU items
+    PU_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PU_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PU_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PU_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    PU_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # CONF items
+    CONF_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CONF_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CONF_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CONF_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CONF_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # ATT items
+    ATT_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    ATT_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    ATT_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    ATT_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    ATT_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # TRST items
+    TRST_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    TRST_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    TRST_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    TRST_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    TRST_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # SAT items
+    SAT_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    SAT_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    SAT_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    SAT_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    SAT_5 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+
+    # CI items
+    CI_1 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CI_2 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CI_3 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)
+    CI_4 = forms.ChoiceField(choices=SKOR_CHOICES, widget=forms.RadioSelect)

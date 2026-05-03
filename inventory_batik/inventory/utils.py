@@ -23,6 +23,7 @@ class UnitTypes(Enum):
 class TypeTypes(Enum):
     PURCHASE = "purchase"
     SALES = "sales"
+    PRODUCTION = "production"
         
     @classmethod
     def choices(cls):

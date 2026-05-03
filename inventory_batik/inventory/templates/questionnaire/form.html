@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Kuesioner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #ede9f6;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        .form-wrapper {
+            max-width: 640px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            margin-bottom: 15px;
+        }
+
+        .form-card label.field-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 16px;
+        }
+
+        .required-star {
+            color: #d93025;
+            margin-left: 4px;
+        }
+
+        /* Text input */
+        .text-input-wrapper {
+            margin-top: 8px;
+        }
+
+        .text-input-wrapper input[type="text"] {
+            width: 100%;
+            border: none;
+            border-bottom: 1px solid #9e9e9e;
+            padding: 4px 0;
+            font-size: 14px;
+            color: #202124;
+            outline: none;
+            background: transparent;
+            transition: border-color 0.2s;
+        }
+
+        .text-input-wrapper input[type="text"]:focus {
+            border-bottom: 2px solid #673ab7;
+        }
+
+        /* Radio buttons */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-group ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .radio-group ul li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radio-group ul li label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #202124;
+            font-weight: 400;  /* override the bold from .field-label */
+            margin-bottom: 0;  /* override the 16px margin from .field-label */
+        }
+
+        .radio-group ul li input[type="radio"] {
+            accent-color: #673ab7;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            accent-color: #673ab7;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .radio-item span {
+            font-size: 14px;
+            line-height: 20px;
+            color: #202124;
+        }
+
+        .text-input-address textarea {
+            width: 100%;
+            outline: none;
+            border-radius: .5rem;
+            padding: 6px 4px;
+        }
+
+        .text-input-address textarea:focus {
+            border: 2px solid #673ab7;
+            outline: none;
+        }
+
+        /* Error messages */
+        .errorlist {
+            list-style: none;
+            color: #d93025;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .kuesioner-header {
+            background-color: #673ab7;
+            color: #ffffff;
+            padding: 14px 24px;
+            border-radius: 8px 8px 0 0;
+            font-size: 16px;
+            font-weight: 500;
+            margin: -24px -24px 20px -24px;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        .matrix-table th {
+            font-size: 13px;
+            font-weight: 500;
+            color: #5f6368;
+            text-align: center;
+            padding: 8px 4px;
+            min-width: 52px;
+        }
+
+        .matrix-table th:first-child { text-align: left; min-width: 180px; }
+
+        .matrix-table tr:nth-child(even) td { background-color: #f8f8f8; }
+
+        .matrix-table td {
+            padding: 12px 4px;
+            vertical-align: middle;
+            font-size: 13px;
+            color: #202124;
+            line-height: 1.5;
+        }
+
+        .matrix-table td:not(:first-child) { text-align: center; }
+
+        .matrix-table td input[type="radio"] {
+            accent-color: #673ab7;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Submit button */
+        .submit-row {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 8px;
+        }
+
+        .btn-submit {
+            background-color: #673ab7;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: #5e35b1;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-wrapper">
+        <!-- Header Card -->
+        <div class="form-card" style="border-top: 10px solid #673ab7;">
+            <h1 style="font-size: 22px; font-weight: 700; color: #202124; margin-bottom: 16px; line-height: 1.4;">
+                INSTRUMEN PENELITIAN ANALIS FAKTOR YANG MEMPENGARUHI MINAT KEBERLANJUTAN PENGGUNAAN SISTEM PENGELOLAAN INVENTORY DIGITAL PADA UMKM BATIK DI JAWA TENGAH
+            </h1>
+            <p style="font-size: 14px; color: #202124; line-height: 1.7; margin-bottom: 16px;">
+                Penelitian ini membahas lebih lanjut faktor yang mempengaruhi minat keberlanjutan penggunaan sistem pengelolaan inventori digital pada UMKM Batik di Jawa Tengah. Indikator pada penelitian ini disusun berdasarkan penelitian sebelumnya yang kemudian disesuaikan dengan penelitian ini. Variabel yang terdapat pada penelitian ini akan diukur melalui indikator-indikator yang dirumuskan dalam bentuk pertanyaan dan dinilai menggunakan skala likert.
+            </p>
+            <p style="font-size: 14px; color: #202124; line-height: 1.7; margin-bottom: 16px;">
+                Penelitian ini menggunakan skala likert 4. Nilai dalam skala likert memiliki interpretasi, diantaranya sebagai berikut:
+            </p>
+            <ul style="list-style: none; font-size: 14px; color: #202124; line-height: 2;">
+                <li>1 = STS (Sangat Tidak Setuju)</li>
+                <li>2 = TS (Tidak Setuju)</li>
+                <li>3 = S (Setuju)</li>
+                <li>4 = SS (Sangat Setuju)</li>
+            </ul>
+
+            <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 16px 0;">
+
+            <p style="font-size: 13px; color: #d93025;">* Wajib diisi</p>
+        </div>
+
+        <form method="post" novalidate>
+        {% csrf_token %}
+            <!-- Nama -->
+            <div class="form-card">
+                <label class="field-label" for="{{ form.nama.id_for_label }}">
+                    Nama <span class="required-star">*</span>
+                </label>
+                <div class="text-input-wrapper">
+                    {{ form.nama }}
+                </div>
+                {% if form.nama.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.nama.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Usia -->
+            <div class="form-card">
+                <label class="field-label">Usia <span class="required-star">*</span></label>
+                <div class="radio-group">
+                    {% for radio in form.usia %}
+                        <label class="radio-item">
+                            {{ radio.tag }}
+                            <span>{{ radio.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if form.usia.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.usia.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Pendidikan Terakhir -->
+            <div class="form-card">
+                <label class="field-label">Pendidikan Terakhir <span class="required-star">*</span></label>
+                <div class="radio-group">
+                    {% for radio in form.pendidikan_terakhir %}
+                        <label class="radio-item">
+                            {{ radio.tag }}
+                            <span>{{ radio.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% if form.pendidikan_terakhir.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.pendidikan_terakhir.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Asal UMKM -->
+            <div class="form-card">
+                <label class="field-label" for="{{ form.umkm.id_for_label }}">
+                    Asal UMKM <span class="required-star">*</span>
+                </label>
+                <div class="text-input-wrapper">{{ form.umkm }}</div>
+                {% if form.umkm.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.umkm.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Alamat -->
+            <div class="form-card">
+                <label class="field-label" for="{{ form.address.id_for_label }}">
+                    Alamat <span class="required-star">*</span>
+                </label>
+                <div class="text-input-wrapper text-input-address">{{ form.address }}</div>
+                {% if form.address.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.address.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Nomor HP -->
+            <div class="form-card">
+                <label class="field-label" for="{{ form.phone_number.id_for_label }}">
+                    Nomor HP <span class="required-star">*</span>
+                </label>
+                <div class="text-input-wrapper">{{ form.phone_number }}</div>
+                {% if form.phone_number.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.phone_number.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Kuesioner Section -->
+            <div class="form-card">
+                <div class="kuesioner-header">Kuesioner</div>
+
+                <!-- Variabel Perceived Easy of Use -->
+                <p class="field-label">
+                    Variabel <em>Perceived Easy of Use</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Mudah bagi saya untuk menggunakan sistem ini</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PEOU_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya tidak membutuhkan waktu lama untuk memahami sistem</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PEOU_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Menggunakan sistem ini memudahkan saya dalam pekerjaan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PEOU_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya tidak perlu bantuan orang lain untuk mengerti sistem ini</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PEOU_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Secara keseluruhan sistem ini mudah dipahami</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PEOU_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.PEOU.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.PEOU.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Perceived Usefulness -->
+                <p class="field-label">
+                    Variabel <em>Perceived Usefulness</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Sistem membantu meningkatkan efisiensi kerja</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PU_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem meningkatkan produktivitas pekerjaan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PU_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem mempermudah menyelesaikan tugas</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PU_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem mempermudah proses kerja secara keseluruhan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PU_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem mengurangi waktu yang dibutuhkan dalam menyelesaikan tugas</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="PU_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.PU.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.PU.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Confirmation -->
+                <p class="field-label">
+                    Variabel <em>Confirmation</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Pengalaman saya menggunakan sistem sesuai dengan ekspektasi saya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CONF_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem memenuhi harapan saya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CONF_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem berfungsi seperti yang telah dijelaskan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CONF_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Pengalaman saat menggunakan sistem lebih baik dari yang saya harapkan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CONF_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem bekerja sesuai dengan kebutuhan saya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CONF_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.CONF.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.CONF.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Attitude -->
+                <p class="field-label">
+                    Variabel <em>Attitude</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Saya memiliki pandangan positif terhadap sistem</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="ATT_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem membuat saya lebih percaya diri dalam bekerja</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="ATT_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya percaya penggunaan sistem ini bermanfaat bagi UMKM</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="ATT_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem ini mempermudah pekerjaan saya sehari-hari</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="ATT_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya lebih memilih sistem ini dibandingkan dengan metode manual</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="ATT_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.ATT.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.ATT.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Trust -->
+                <p class="field-label">
+                    Variabel <em>Trust</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Saya percaya bahwa sistem ini aman untuk selalu digunakan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="TRST_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya percaya bahwa sistem ini merupakan cara yang aman untuk mengelola pekerjaan saya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="TRST_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Berdasarkan pengalaman saya, saya percaya sistem ini aman</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="TRST_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya percaya kemanan data pada sistem ini</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="TRST_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya percaya sistem ini mampu memberikan yang saya butuhkan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="TRST_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.TRST.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.TRST.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Satisfaction -->
+                <p class="field-label">
+                    Variabel <em>Satisfaction</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Saya puas dengan kinerja sistem dalam membantu pekerjaan saya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="SAT_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Sistem memberikan pengalaman yang menyenangkan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="SAT_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya merasa keputusan menggunakan sistem ini adalah hal yang tepat</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="SAT_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Penggunaan sistem membuat pekerjaan saya lebih mudah</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="SAT_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya puas dengan hasil yang saya dapatkan dari sistem</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="SAT_5" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.SAT.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.SAT.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <div class="form-card">
+                <!-- Variabel Continuance Intention -->
+                <p class="field-label">
+                    Variabel <em>Continuance Intention</em>
+                    <span class="required-star">*</span>
+                </p>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>STS</th>
+                            <th>TS</th>
+                            <th>S</th>
+                            <th>SS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Saya berencana menggunakan sistem ini secara berkelanjutan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CI_1" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya akan merekomendasikan sistem ini kepada orang lain</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CI_2" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya akan meningkatkan frekuensi penggunaan sistem ini di masa depan</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CI_3" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Saya yakin akan terus menggunakan sistem ini meskipun ada alternatif lainnya</td>
+                            {% for val in "1234" %}
+                            <td>
+                                <input type="radio" name="CI_4" value="{{ val }}">
+                            </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% if form.CI.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.CI.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+
+            <!-- Submit -->
+            <div class="submit-row">
+                <button type="submit" class="btn-submit">Kirim</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

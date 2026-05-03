@@ -35,6 +35,27 @@ from datetime import datetime
 
 from django.shortcuts import redirect
 
+# Map each field prefix to its variabel code
+VARIABEL_MAP = {
+    'PEOU': 'PEOU',
+    'PU':   'PU',
+    'CONF': 'CONF',
+    'ATT':  'ATT',
+    'TRST': 'TRST',
+    'SAT':  'SAT',
+    'CI':   'CI',
+}
+
+JAWABAN_CODES = [
+    'PEOU_1', 'PEOU_2', 'PEOU_3', 'PEOU_4', 'PEOU_5',
+    'PU_1',   'PU_2',   'PU_3',   'PU_4',
+    'CONF_1', 'CONF_2', 'CONF_3',
+    'ATT_1',  'ATT_2',  'ATT_3',
+    'TRST_1', 'TRST_2', 'TRST_3',
+    'SAT_1',  'SAT_2',  'SAT_3',
+    'CI_1',   'CI_2',   'CI_3',
+]
+
 def anonymous_required(view_function):
     def wrapper_function(request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -480,6 +501,7 @@ def purchase_view(request):
     if end_date:
         try:
             end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            end_date = end_date + timedelta(days=1) - timedelta(microseconds=1)
             purchases = purchases.filter(created_at__lte=end_date)
         except ValueError:
             pass  # Handle invalid date format if necessary
@@ -498,7 +520,7 @@ def purchase_view(request):
 def purchase_create_view(request):
     user_id         = request.user.id
     if request.method == 'POST':
-        form = PurchaseForm(request.POST)
+        form = PurchaseForm(request.POST, user=request.user.id)
         if form.is_valid():
             # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
             temp = form.save(commit=False)
@@ -532,7 +554,7 @@ def purchase_create_view(request):
             messages.success(request, 'Sukses menambah pembelian baru.')
             return redirect('purchase.index')
     else:
-        form = PurchaseForm()
+        form = PurchaseForm(user=request.user.id)
     return render(request, 'purchase/form.html', {'form': form})
 
 @login_required
@@ -542,13 +564,13 @@ def purchase_update_view(request, purchase_id):
     except Purchase.DoesNotExist:
         raise Http404("Pembelian tidak ditemukan.")
     if request.method == 'POST':
-        form = PurchaseForm(request.POST, instance=purchase)
+        form = PurchaseForm(request.POST, instance=purchase, user=request.user.id)
         if form.is_valid():
             form.save()
             messages.success(request, 'Sukses Mengubah pembelian.')
             return redirect('purchase.index')
     else:
-        form = PurchaseForm(instance=purchase)
+        form = PurchaseForm(instance=purchase, user=request.user.id)
     return render(request, 'purchase/form.html', {'form': form})
 
 def purchase_delete_view(request, purchase_id):
@@ -594,6 +616,7 @@ def production_view(request):
     if end_date:
         try:
             end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            end_date = end_date + timedelta(days=1) - timedelta(microseconds=1)
             productions = productions.filter(created_at__lte=end_date)
         except ValueError:
             pass  # Handle invalid date format if necessary
@@ -646,7 +669,7 @@ def production_update_view(request, production_id):
     except Production.DoesNotExist:
         raise Http404("Produksi tidak ditemukan.")
     if request.method == 'POST':
-        form = ProductionForm(request.POST, instance=production)
+        form = ProductionForm(request.POST, instance=production, user=request.user.id)
         if form.is_valid():
             # prod = Production.objects.get(id=form.id)
             return HttpResponse(request.POST.get('pk',''))
@@ -669,7 +692,7 @@ def production_update_view(request, production_id):
             messages.success(request, 'Sukses Mengubah Produksi.')
             return redirect('production.index')
     else:
-        form = ProductionForm(instance=production)
+        form = ProductionForm(instance=production, user=request.user.id)
     return render(request, 'production/form.html', {'form': form})
 
 def production_delete_view(request, production_id):
@@ -715,6 +738,7 @@ def sales_view(request):
     if end_date:
         try:
             end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            end_date = end_date + timedelta(days=1) - timedelta(microseconds=1)
             sales = sales.filter(created_at__lte=end_date)
         except ValueError:
             pass  # Handle invalid date format if necessary
@@ -733,7 +757,7 @@ def sales_view(request):
 def sales_create_view(request):
     user_id         = request.user.id
     if request.method == 'POST':
-        form = SalesForm(request.POST)
+        form = SalesForm(request.POST, user=request.user.id)
         if form.is_valid():
             # Buat objek outlet baru dari form tanpa menyimpan ke database dulu
             temp = form.save(commit=False)
@@ -767,7 +791,7 @@ def sales_create_view(request):
             messages.success(request, 'Sukses menambah penjualan baru.')
             return redirect('sales.index')
     else:
-        form = SalesForm()
+        form = SalesForm(user=request.user.id)
     return render(request, 'sales/form.html', {'form': form})
 
 @login_required
@@ -777,7 +801,7 @@ def sales_update_view(request, sales_id):
     except Sales.DoesNotExist:
         raise Http404("Penjualan tidak ditemukan.")
     if request.method == 'POST':
-        form = SalesForm(request.POST, instance=sales)
+        form = SalesForm(request.POST, instance=sales, user=request.user.id)
         if form.is_valid():
             form.save()
 
@@ -797,7 +821,7 @@ def sales_update_view(request, sales_id):
             messages.success(request, 'Sukses Mengubah penjualan.')
             return redirect('sales.index')
     else:
-        form = SalesForm(instance=sales)
+        form = SalesForm(instance=sales, user=request.user.id)
     return render(request, 'sales/form.html', {'form': form})
 
 def sales_delete_view(request, sales_id):
@@ -843,6 +867,7 @@ def transaction_view(request):
     if end_date:
         try:
             end_date = datetime.strptime(end_date, '%Y-%m-%d')  # Convert to datetime
+            end_date = end_date + timedelta(days=1) - timedelta(microseconds=1)
             transactions = transactions.filter(created_at__lte=end_date)
         except ValueError:
             pass  # Handle invalid date format if necessary
@@ -929,6 +954,135 @@ def export_view(request):
     }
 
     return render(request, 'export/index.html', context)
+
+def questionnaire_view(request):
+    respondents = Responden.objects.all().order_by('-submitted_at')
+
+    # return HttpResponse(respondents)
+
+    context = {
+        'respondents': respondents,
+    }
+
+    return render(request, 'questionnaire/index.html', context)
+
+def questionnaire_isi_view(request):
+    if request.method == 'POST':
+        form = RespondenForm(request.POST)
+
+        if form.is_valid():
+            data = form.cleaned_data
+
+            # Use transaction so everything saves together or not at all
+            with transaction.atomic():
+
+                # 1. Save personal info to Responden
+                responden = Responden.objects.create(
+                    nama                = data['nama'],
+                    usia                = data['usia'],
+                    pendidikan_terakhir = data['pendidikan_terakhir'],
+                    umkm                = data['umkm'],
+                    address             = data['address'],
+                    phone_number        = data['phone_number'],
+                )
+
+                # 2. Loop through all Likert answers and save to Jawaban
+                jawaban_list = []
+                for field_name, value in data.items():
+                    # Only process fields that match a variabel prefix (e.g. PEOU_1, PU_2)
+                    parts = field_name.split('_')
+                    prefix = parts[0]  # e.g. "PEOU", "PU", "CONF"
+
+                    if prefix in VARIABEL_MAP:
+                        jawaban_list.append(Jawaban(
+                            responden = responden,
+                            variabel  = VARIABEL_MAP[prefix],
+                            kode_item = field_name,   # e.g. "PEOU_1"
+                            skor      = int(value),
+                        ))
+
+                # bulk_create saves all Jawaban rows in one query
+                Jawaban.objects.bulk_create(jawaban_list)
+
+            messages.success(request, 'Terima kasih! Jawaban Anda telah tersimpan.')
+            return redirect('questionnaire.sukses')
+
+        # Form invalid — re-render with errors
+        return render(request, 'questionnaire/form.html', {'form': form})
+
+    # GET request — show empty form
+    form = RespondenForm()
+    return render(request, 'questionnaire/form.html', {'form': form})
+
+def questionnaire_detail_view(request, respondent_id):
+    responden = get_object_or_404(Responden, pk=respondent_id)
+
+    # Build initial data dict from saved Jawaban rows
+    initial_data = {
+        'nama'                : responden.nama,
+        'usia'                : responden.usia,
+        'pendidikan_terakhir' : responden.pendidikan_terakhir,
+        'umkm'                : responden.umkm,
+        'address'             : responden.address,
+        'phone_number'        : responden.phone_number,
+    }
+
+    # Add each Likert answer — kode_item is already the field name e.g. "PEOU_1"
+    for jawaban in responden.jawaban.all():
+        initial_data[jawaban.kode_item] = str(jawaban.skor)  # str() because ChoiceField expects string
+
+    # Pass initial data into the form — this pre-selects all the radio buttons
+    form = RespondenForm(initial=initial_data)
+
+    return render(request, 'questionnaire/detail.html', {
+        'form'      : form,
+        'responden' : responden,
+    })
+
+def questionnaire_sukses_view(request):
+    return render(request, 'questionnaire/success.html')
+
+def questionnaire_export_view(request):
+    if request.method == 'POST':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="DataKuesioner.csv"'
+
+        writer = csv.writer(response)
+
+        # Header row
+        writer.writerow([
+            'No', 'Nama', 'Usia', 'Pendidikan Terakhir', 'Asal UMKM',
+            'Alamat', 'Nomor HP', 'Tanggal Submit',
+            *JAWABAN_CODES  # unpack all Likert column headers
+        ])
+
+        respondents = Responden.objects.all().order_by('-submitted_at')
+
+        for idx, responden in enumerate(respondents):
+            # Build a dict of kode_item -> skor for quick lookup
+            jawaban_map = {
+                j.kode_item: j.skor
+                for j in responden.jawaban.all()
+            }
+
+            # Get each score in order, default to '' if missing
+            scores = [jawaban_map.get(code, '') for code in JAWABAN_CODES]
+
+            writer.writerow([
+                idx + 1,
+                responden.nama,
+                responden.usia,
+                responden.pendidikan_terakhir,
+                responden.umkm,
+                responden.address,
+                responden.phone_number,
+                responden.submitted_at.strftime('%d-%m-%Y %H:%M'),
+                *scores
+            ])
+
+        return response
+
+    return render(request, 'questionnaire/index.html')
 
 # Periodic Review
 def calculate_inventory_cost(product, to):
