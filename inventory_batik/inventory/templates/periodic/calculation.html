@@ -41,11 +41,11 @@
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No.</th>
-                        <th class="text-center">Nama Barang</th>
-                        <th width="20%" class="text-center">Biaya Inventory</th>
+                        <th class="text-center">Item Name</th>
+                        <th width="20%" class="text-center">Inventory Cost</th>
                         <th width="15%" class="text-center">Reorder Point (s)</th>
-                        <th width="15%" class="text-center">Stok Maksimum (S)</th>
-                        <th width="15%" class="text-center">Review Interval (R) (hari)</th>
+                        <th width="15%" class="text-center">Maximum Stock (S)</th>
+                        <th width="15%" class="text-center">Review Interval (R) (Day)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -63,7 +63,7 @@
                     {% endfor %}
                     {% else %}
                     <tr>
-                        <td colspan="5">Data tidak ditemukan.</td>
+                        <td colspan="5">Data not found.</td>
                     </tr>
                     {% endif %}
                 </tbody>
