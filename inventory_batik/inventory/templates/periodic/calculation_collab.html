@@ -1,0 +1,414 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Periodic Review {% endblock title %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}
+
+{% load static %}
+
+{% load humanize %}
+
+<style>
+    .nav-link {
+        box-shadow: none;
+        border: none;
+    }
+</style>
+
+{% endblock stylesheets %}
+
+{% block content %}
+
+<div class="pt-5">
+    <div class="container">
+        <h1>Vendor Cost</h1>
+
+        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <div>
+            {% if messages %}
+            
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message | safe }}
+                </div>
+                {% endfor %}
+            
+            {% endif %}
+        </div>
+
+        <br>
+        
+        <!-- Tabel RsS periodic review
+        <div>
+            <h4>Hasil RsS Periodic Review</h4>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Product Name</th>
+                        <th width="15%" class="text-center">Biaya Order</th>
+                        <th width="15%" class="text-center">Biaya Simpan</th>
+                        <th width="15%" class="text-center">Biaya Kekurangan</th>
+                        <th width="15%" class="text-center">Total Biaya Vendor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-right">Rp {{ dt.c_order|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_hold|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_stockout|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.c_total|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data tidak ditemukan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div> -->
+
+        <!-- <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="initial-calculation" data-toggle="pill" data-target="#initial-calculation" type="button" role="tab" aria-controls="initial-calculation" aria-selected="true">Initial Calculation</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="optimized-calculation" data-toggle="pill" data-target="#optimized-calculation" type="button" role="tab" aria-controls="optimized-calculation" aria-selected="true">Optimized Calculation</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="initial-calculation" role="tabpanel" aria-labelledby="initial-calculation-tab">asd</div>
+            <div class="tab-pane fade" id="optimized-calculation" role="tabpanel" aria-labelledby="optimized-calculation-tab">123</div>
+        </div> -->
+
+        <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link w-100 active" id="initial-tab" data-toggle="pill" data-target="#initial" type="button" role="tab" aria-controls="initial" aria-selected="true">Initial</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link w-100" id="optimized-tab" data-toggle="pill" data-target="#optimized" type="button" role="tab" aria-controls="optimized" aria-selected="false">Optimized</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade show active" id="initial" role="tabpanel" aria-labelledby="initial-tab">
+                <!-- Tabel simulasi transaksi pusat -->
+                <!-- <h3>INITIAL CALCULATION</h3> -->
+                <h4 class="mt-3">Collaborative Inventory</h4>
+
+                <div class="mt-3">
+                    <h6 class="text-right">Duration : {{ first_total_calc_duration }}</h6>
+                    <h5>Periodic Review Results</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                <th width="15%" class="text-center">Collaborative Inventory Cost (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.first_c_order|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_hold|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_stockout|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_c_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ first_total_order|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_hold|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_stockout|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_all|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- <div class="mt-3">
+                    <h5>Transaction for One Cycle (T)</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.first_purchases_freq|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_purchases_total|intcomma }}</td>
+                                        <td class="text-right">{{ dt.first_stockout_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ first_total_purchases_freq|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_purchases_total|intcomma }}</td>
+                                    <td class="text-right">{{ first_total_stockout_total|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div> -->
+
+                <!-- Tabel simulasi transaksi outlet -->
+                {% if data_all %}
+                    {% for dt_all in data_all %}
+                        <!-- Tabel RsS periodic review -->
+                        <div>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Reorder Point (s) (pcs)</th>
+                                        <th width="15%" class="text-center">Maximum Stock (S) (pcs)</th>
+                                        <th width="15%" class="text-center">Review Interval (R) (Day)</th>
+                                        <th width="15%" class="text-center">Total Stockout (pcs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-center">{{ dt.first_s }}</td>
+                                                <td class="text-center">{{ dt.first_S }}</td>
+                                                <td class="text-center">{{ dt.first_R }}</td>
+                                                <td class="text-right">{{ dt.first_stockout_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data tidak ditemukan.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade" id="optimized" role="tabpanel" aria-labelledby="optimized-tab">
+                {% if pso_used %}
+                <div class="alert alert-info mt-3">
+                    <h5 class="mb-2">
+                        <strong>PSO Hyperparameter Optimisation</strong>
+                        <span class="badge badge-success ml-1">Active</span>
+                    </h5>
+                    <!-- <p class="mb-1 text-muted small">
+                        One unified hyperparameter set was found by PSO and applied to all products.
+                    </p> -->
+                    {% if pso_best_params %}
+                        <div class="row mt-2">
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Generations</small>
+                                    <strong class="d-block">{{ pso_best_params.num_generations }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Population Size</small>
+                                    <strong class="d-block">{{ pso_best_params.population_size }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Crossover Rate</small>
+                                    <strong class="d-block">{{ pso_best_params.crossover_rate }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Mutation Rate</small>
+                                    <strong class="d-block">{{ pso_best_params.mutation_rate }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- {% if pso_duration %}
+                            <small class="text-muted mt-2 d-block">PSO search completed in {{ pso_duration }}s</small>
+                        {% endif %} -->
+                    {% else %}
+                        <p class="text-muted small mb-0">Using manual hyperparameters.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- <h3>OPTIMIZED CALCULATION</h3> -->
+                <!-- Tabel simulasi transaksi pusat -->
+                <h4 class="mt-3">Collaborative Inventory</h4>
+
+                <div class="mt-3">
+                    <!-- <h6 class="text-right">Duration : {{ total_calc_duration }}</h6> -->
+                    <h6 class="text-right">Duration : {{ total_duration }}</h6>
+                    <h5>Periodic Review Results</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Order Cost (Rp)</th>
+                                <th width="15%" class="text-center">Hold Cost (Rp)</th>
+                                <th width="15%" class="text-center">Stockout Cost (Rp)</th>
+                                <th width="15%" class="text-center">Collaborative Inventory Cost (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <!-- <td class="text-right">{{ dt.c_order|intcomma }}</td> -->
+                                        <td class="text-right">{{ dt.c_order|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_hold|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_stockout|intcomma }}</td>
+                                        <td class="text-right">{{ dt.c_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ total_order|intcomma }}</td>
+                                    <td class="text-right">{{ total_hold|intcomma }}</td>
+                                    <td class="text-right">{{ total_stockout|intcomma }}</td>
+                                    <td class="text-right">{{ total_all|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- <div class="mt-3">
+                    <h5>Transaction for One Cycle (T)</h5>
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th width="5%" class="text-center">No.</th>
+                                <th class="text-center">Product Name</th>
+                                <th width="15%" class="text-center">Purchases Frequency (k)</th>
+                                <th width="15%" class="text-center">Purchases Total (pcs)</th>
+                                <th width="15%" class="text-center">Stockout Total (pcs)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if total_data %}
+                                {% for dt in total_data %}
+                                    <tr>
+                                        <td class="text-center">{{ forloop.counter }}</td>
+                                        <td>{{ dt.nama_barang }}</td>
+                                        <td class="text-right">{{ dt.purchases_freq|intcomma }}</td>
+                                        <td class="text-right">{{ dt.purchases_total|intcomma }}</td>
+                                        <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
+                                    </tr>
+                                {% endfor %}
+                                <tr>
+                                    <td class="text-center" colspan="2">TOTAL</td>
+                                    <td class="text-right">{{ total_purchases_freq|intcomma }}</td>
+                                    <td class="text-right">{{ total_purchases_total|intcomma }}</td>
+                                    <td class="text-right">{{ total_stockout_total|intcomma }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">Data not found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div> -->
+
+                <!-- Tabel simulasi transaksi outlet -->
+                {% if data_all %}
+                    {% for dt_all in data_all %}
+                        <!-- Tabel RsS periodic review -->
+                        <div>
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">No.</th>
+                                        <th class="text-center">Product Name</th>
+                                        <th width="15%" class="text-center">Reorder Point (s) (pcs)</th>
+                                        <th width="15%" class="text-center">Maximum Stock (S) (pcs)</th>
+                                        <th width="15%" class="text-center">Review Interval (R) (Day)</th>
+                                        <th width="15%" class="text-center">Total Stockout (pcs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if dt_all.data %}
+                                        {% for dt in dt_all.data %}
+                                            <tr>
+                                                <td class="text-center">{{ forloop.counter }}</td>
+                                                <td>{{ dt.nama_barang }}</td>
+                                                <td class="text-center">{{ dt.best_s }}</td>
+                                                <td class="text-center">{{ dt.best_S }}</td>
+                                                <td class="text-center">{{ dt.best_R }}</td>
+                                                <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5">Data tidak ditemukan.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+<!-- Specific JS goes HERE --> 
+{% block javascripts %}
+
+{% load static %}
+
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
+<script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+{% endblock javascripts %}

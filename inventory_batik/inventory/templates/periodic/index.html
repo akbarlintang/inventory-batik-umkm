@@ -39,9 +39,121 @@
         
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label for="exampleFormControlFile1">Input file</label>
                 <input type="file" name="file" class="form-control-file" id="exampleFormControlFile1">
+            </div> -->
+
+            <div class="form-group">
+                <label>Algorithm Type</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="algorithm" id="algoPSO" value="pso"
+                        checked onchange="toggleAlgoFields()">
+                    <label class="form-check-label" for="algoPSO">
+                        PSO (Particle Swarm Optimization)
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="algorithm" id="algoGA" value="genetic_bayesian"
+                        onchange="toggleAlgoFields()">
+                    <label class="form-check-label" for="algoGA">
+                        Genetic Algorithm + Bayesian Optimization
+                    </label>
+                </div>
+            </div>
+
+            <!-- GA + BO fields (hidden by default) -->
+            <div id="ga_bo_fields" style="display:none;">
+                <hr>
+
+                <!-- GA hyperparameters -->
+                <p class="text-muted small mb-1 text-uppercase font-weight-bold">GA Hyperparameters</p>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="num_generations">Number of Generations</label>
+                            <input type="number" name="num_generations" class="form-control" id="num_generations" placeholder="50">
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="population_size">Population Size</label>
+                            <input type="number" name="population_size" class="form-control" id="population_size" placeholder="30">
+                            <small class="form-text text-muted">Ignored when BO is on</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="crossover_rate">Crossover Rate (0–1)</label>
+                            <input type="text" name="crossover_rate" class="form-control" id="crossover_rate" placeholder="0.8">
+                            <small class="form-text text-muted">Ignored when BO is on</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="form-group">
+                            <label for="mutation_rate">Mutation Rate (0–1)</label>
+                            <input type="text" name="mutation_rate" class="form-control" id="mutation_rate" placeholder="0.1">
+                            <small class="form-text text-muted">Ignored when BO is on</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- BO toggle -->
+                <p class="text-muted small mb-1 text-uppercase font-weight-bold">Hyperparameter Optimisation</p>
+                <div class="custom-control custom-switch mb-2">
+                    <input type="checkbox" class="custom-control-input" id="use_bo_toggle"
+                        name="use_bo" value="true" onchange="toggleBo(this)">
+                    <label class="custom-control-label" for="use_bo_toggle">
+                        Use Bayesian Optimisation
+                        <span class="badge badge-info ml-1">recommended</span>
+                    </label>
+                </div>
+                <small class="form-text text-muted mb-3 d-block">
+                    Bayesian Optimisation automatically finds the best GA hyperparameters
+                    using a Gaussian Process surrogate model — more efficient than PSO
+                    with fewer evaluations.
+                </small>
+
+                <div id="bo_fields" style="display:none;">
+                    <div class="card card-body bg-light mb-3">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="bo_n_calls">Total Evaluations</label>
+                                    <input type="number" name="bo_n_calls" class="form-control" id="bo_n_calls"
+                                        placeholder="20" min="5" max="100">
+                                    <small class="form-text text-muted">Total BO iterations — 15–25 is usually enough</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-group">
+                                    <label for="bo_n_initial">Initial Random Points</label>
+                                    <input type="number" name="bo_n_initial" class="form-control" id="bo_n_initial"
+                                        placeholder="5" min="3" max="20">
+                                    <small class="form-text text-muted">Random exploration before GP model kicks in</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-group mb-0">
+                                    <label for="stockout_weight">Stockout Penalty Weight</label>
+                                    <input type="number" name="stockout_weight" class="form-control" id="stockout_weight"
+                                        placeholder="500" step="100" min="0">
+                                    <small class="form-text text-muted">
+                                        How much 1 unit of stockout costs vs your inventory cost numbers.
+                                        Raise this if you want BO to prioritise reducing stockout.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-success">Calculate</button>
@@ -55,6 +167,17 @@
 {% block javascripts %}
 
 {% load static %}
+
+<script>
+    function toggleAlgoFields() {
+        const isGA = document.getElementById('algoGA').checked;
+        document.getElementById('ga_bo_fields').style.display = isGA ? 'block' : 'none';
+    }
+
+    function toggleBo(checkbox) {
+        document.getElementById('bo_fields').style.display = checkbox.checked ? 'block' : 'none';
+    }
+</script>
 
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
