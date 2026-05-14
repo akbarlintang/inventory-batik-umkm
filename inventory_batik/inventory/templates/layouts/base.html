@@ -13,16 +13,15 @@
   {% load static %}
 
   <!-- Favicon - loaded as static -->
-  <link rel="icon" href="https://keuangan.smkbpdarululum.id/static/assets/img/brand/favicon.png" type="image/png">
+  <link rel="icon" href="{% static 'assets/img/brand/favicon.png' %}" type="image/png">
     <!-- Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
     <!-- Icons -->
-    <link href="https://technext.github.io/argon-dashboard/assets/js/plugins/nucleo/css/nucleo.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'assets/vendor/nucleo/css/nucleo.css' %}" type="text/css">
                 
-    <link rel="stylesheet" href="https://keuangan.smkbpdarululum.id/static/assets/vendor/@fortawesome/fontawesome-free/css/all.min.css"
-        type="text/css">
+    <link rel="stylesheet" href="{% static 'assets/vendor/@fortawesome/fontawesome-free/css/all.min.css' %}" type="text/css">
     <!-- Argon CSS -->
-    <link rel="stylesheet" href="https://keuangan.smkbpdarululum.id/static/assets/css/argon.css" type="text/css">
+    <link rel="stylesheet" href="{% static 'assets/css/argon.min.css' %}" type="text/css">
   <!-- Page plugins -->
 
   <!-- Bootstrap CSS -->
@@ -59,7 +58,7 @@
   {% include "includes/scripts.html" %}
 
   <!-- Specific JS goes HERE -->
-  <script src="https://keuangan.smkbpdarululum.id/static/assets/js/argon.js"></script>
+  <script src="{% static 'assets/js/argon.js' %}"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 
