@@ -214,6 +214,10 @@
                                                 <td class="text-right">{{ dt.first_stockout_total|intcomma }}</td>
                                             </tr>
                                         {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="5">TOTAL</td>
+                                            <td class="text-right">{{ first_total_stockout_total|intcomma }}</td>
+                                        </tr>
                                     {% else %}
                                         <tr>
                                             <td colspan="5">Data tidak ditemukan.</td>
@@ -386,6 +390,10 @@
                                                 <td class="text-right">{{ dt.stockout_total|intcomma }}</td>
                                             </tr>
                                         {% endfor %}
+                                        <tr>
+                                            <td class="text-center" colspan="5">TOTAL</td>
+                                            <td class="text-right">{{ total_stockout_total|intcomma }}</td>
+                                        </tr>
                                     {% else %}
                                         <tr>
                                             <td colspan="5">Data tidak ditemukan.</td>
