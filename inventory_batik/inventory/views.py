@@ -34,7 +34,9 @@ from scipy.stats import norm
 from statistics import stdev
 import io, base64
 import seaborn as sns
-from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import random
 from scipy.integrate import quad
 from matplotlib.ticker import FuncFormatter
@@ -1577,7 +1579,7 @@ def periodic_view(request):
                     bo_start = time.time()
                     global_bo_params, _, _ = bo_optimize_hyperparameters_global(
                         products_data, bo_start_date, bo_end_date,
-                        num_generations  = 50,
+                        num_generations  = num_generations,
                         n_calls          = bo_n_calls,
                         n_initial_points = bo_n_initial,
                         stockout_weight  = stockout_weight,
@@ -1895,7 +1897,7 @@ def periodic_view(request):
             # FIRST DATA
             # After processing all products for this outlet, generate the plot
             fig, ax = plt.subplots(figsize=(18, 6))
-            ax.plot(first_combined_inventory_level, linewidth=1.5, color="#FFC000")
+            ax.plot(first_combined_inventory_level, linewidth=1.5, color="#663300")
             ax.set_xlim(0, first_T)  # Ensure it stays within first_T days
             ax.set_ylabel('Demand Level (pcs)', fontsize=18)
             ax.set_xlabel('Day', fontsize=18)
@@ -1961,7 +1963,7 @@ def periodic_view(request):
                 span_b = dt['timespan']
 
                 fig, ax = plt.subplots(figsize=(18, 6))
-                ax.plot(dt['first_stock_history'][:span_f], linewidth=1.5, color="#FFC000")
+                ax.plot(dt['first_stock_history'][:span_f], linewidth=1.5, color="#663300")
                 ax.set_xlim(0, span_f)
                 ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
@@ -1977,7 +1979,7 @@ def periodic_view(request):
                 )
 
                 fig, ax = plt.subplots(figsize=(18, 6))
-                ax.plot(dt['stock_history'][:span_b], linewidth=1.5, color="#FFC000")
+                ax.plot(dt['stock_history'][:span_b], linewidth=1.5, color="#663300")
                 ax.set_xlim(0, span_b)
                 ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
                 ax.set_xlabel('Day', fontsize=18)
@@ -2514,13 +2516,14 @@ def _plot_inventory_level(inventory_level_list, upper_line, x_limit):
     buf.seek(0)
     encoded = base64.b64encode(buf.read()).decode()
     buf.close()
+    plt.switch_backend('agg')
     plt.close()
     return encoded
 
 def _plot_stockout_hist(values, label='Stockout'):
     fig, ax = plt.subplots(figsize=(6, 4))
     if values:
-        sns.histplot(values, kde=False, color="#FFC000", ax=ax)
+        sns.histplot(values, kde=False, color="#663300", ax=ax)
         mean_val = np.mean(values)
         ax.set_title(f'{label} : Mean {mean_val:.3f}')
         ax.axvline(x=mean_val, color='k', alpha=0.5, ls='--')
@@ -2657,9 +2660,13 @@ def bo_optimize_hyperparameters_global(products_data, start_date, end_date,
         history.append(running_min)
 
     best_params = {
-        'population_size': int(result.x[0]),
-        'crossover_rate':  round(float(result.x[1]), 4),
-        'mutation_rate':   round(float(result.x[2]), 4),
+        'population_size':  int(result.x[0]),
+        'crossover_rate':   round(float(result.x[1]), 4),
+        'mutation_rate':    round(float(result.x[2]), 4),
+        'num_generations':  num_generations,
+        'n_calls':          n_calls,
+        'n_initial_points': n_initial_points,
+        'stockout_weight':  stockout_weight,
     }
 
     return best_params, float(result.fun), history
@@ -2769,7 +2776,7 @@ def _parse_post_int(post, key, default):
 def format_seconds(seconds):
     return str(timedelta(seconds=round(seconds)))
 
-def _plot_inventory_level(inventory_list, color="#FFC000"):
+def _plot_inventory_level(inventory_list, color="#663300"):
     """Generate a base64 PNG line chart for a single item's inventory level."""
     fig, ax = plt.subplots(figsize=(18, 6))
     ax.plot(inventory_list, linewidth=1.5, color=color)

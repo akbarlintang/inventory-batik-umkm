@@ -7,6 +7,25 @@
 
 {% load static %}
 
+{% load humanize %}
+
+<style>
+    .custom-switch .custom-control-label::before {
+        left: -1.65rem;
+        width: 1.75rem;
+        pointer-events: all;
+        border-radius: 0.5rem;
+    }
+
+    .custom-switch .custom-control-label::after {
+        left: calc(-1.65rem + 2px)
+    }
+
+    .custom-control-label {
+        padding-left: 1rem;
+    }
+</style>
+
 {% endblock stylesheets %}
 
 {% block content %}

@@ -104,7 +104,6 @@
             <div class="tab-pane fade show active" id="initial" role="tabpanel" aria-labelledby="initial-tab">
                 <!-- Tabel simulasi transaksi pusat -->
                 <!-- <h3>INITIAL CALCULATION</h3> -->
-                <h4 class="mt-3">Collaborative Inventory</h4>
 
                 <div class="mt-3">
                     <h6 class="text-right">Duration : {{ first_total_calc_duration }}</h6>
@@ -298,9 +297,52 @@
                 </div>
                 {% endif %}
 
+                {% if bo_used %}
+                <div class="alert alert-info mt-3">
+                    <h5 class="mb-2">
+                        <strong>Bayesian Optimisation Hyperparameter</strong>
+                        <span class="badge badge-success ml-1">Active</span>
+                    </h5>
+                    <!-- <p class="mb-1 text-muted small">
+                        One unified hyperparameter set was found by PSO and applied to all products.
+                    </p> -->
+                    {% if bo_best_params %}
+                        <div class="row mt-2">
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Generations</small>
+                                    <strong class="d-block">{{ bo_best_params.num_generations }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Total Evaluations</small>
+                                    <strong class="d-block">{{ bo_best_params.n_calls }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Initial Random Points</small>
+                                    <strong class="d-block">{{ bo_best_params.n_initial_points }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="card card-body py-2 text-center">
+                                    <small class="text-muted">Stockout Weight</small>
+                                    <strong class="d-block">{{ bo_best_params.stockout_weight }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- {% if pso_duration %}
+                            <small class="text-muted mt-2 d-block">PSO search completed in {{ pso_duration }}s</small>
+                        {% endif %} -->
+                    {% else %}
+                        <p class="text-muted small mb-0">Using manual hyperparameters.</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 <!-- <h3>OPTIMIZED CALCULATION</h3> -->
-                <!-- Tabel simulasi transaksi pusat -->
-                <h4 class="mt-3">Collaborative Inventory</h4>
 
                 <div class="mt-3">
                     <!-- <h6 class="text-right">Duration : {{ total_calc_duration }}</h6> -->
