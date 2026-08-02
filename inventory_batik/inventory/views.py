@@ -21,6 +21,8 @@ from .models import *
 
 from .forms import *
 
+from datetime import date
+
 # import dependency pso dan periodic review
 import pandas as pd
 import csv
@@ -1541,8 +1543,8 @@ def periodic_view(request):
                         if not bo_sales_dict:
                             continue
 
-                        bo_start_date  = min(bo_sales_dict.keys())
-                        bo_end_date    = bo_start_date + timedelta(days=59)
+                        bo_start_date = date(2026, 1, 1)
+                        bo_end_date   = date(2026, 5, 31)
                         bo_daily_sales = []
                         bo_daily_purch = []
                         cur = bo_start_date
@@ -1574,7 +1576,8 @@ def periodic_view(request):
                 if products_data:
                     bo_start = time.time()
                     global_bo_params, _, _ = bo_optimize_hyperparameters_global(
-                        products_data,
+                        products_data, bo_start_date, bo_end_date,
+                        num_generations  = 50,
                         n_calls          = bo_n_calls,
                         n_initial_points = bo_n_initial,
                         stockout_weight  = stockout_weight,
@@ -1587,14 +1590,18 @@ def periodic_view(request):
             biaya_simpan = 5000
             biaya_order  = 20000
 
-            first_combined_inventory_level = [0] * 60
-            combined_inventory_level       = [0] * 60
-            combined_purchases_list        = [0] * 60
-            combined_sales_list            = [0] * 60
-            first_single_inventory_level   = [0] * 60
-            single_inventory_level         = [0] * 60
-            single_purchases_list          = [0] * 60
-            single_sales_list              = [0] * 60
+            start_date = date(2026, 1, 1)
+            end_date   = date(2026, 5, 31)
+            day_duration = (end_date - start_date).days + 1
+
+            first_combined_inventory_level = [0] * day_duration
+            combined_inventory_level       = [0] * day_duration
+            combined_purchases_list        = [0] * day_duration
+            combined_sales_list            = [0] * day_duration
+            first_single_inventory_level   = [0] * day_duration
+            single_inventory_level         = [0] * day_duration
+            single_purchases_list          = [0] * day_duration
+            single_sales_list              = [0] * day_duration
             first_multiple_inventory_data  = []
             multiple_inventory_data        = []
 
@@ -1615,9 +1622,6 @@ def periodic_view(request):
 
                 sales_dict     = {s['created_at'].date(): s['total_sales']     for s in sales_data}
                 purchases_dict = {p['created_at'].date(): p['total_purchases'] for p in purchases_data}
-
-                start_date = min(sales_dict.keys(), default=datetime.today().date())
-                end_date   = start_date + timedelta(days=59)
 
                 daily_sales     = []
                 daily_purchases = []
@@ -1668,7 +1672,7 @@ def periodic_view(request):
                 # ---- Jalankan GA dengan hyperparameter yang sudah di-resolve ---- #
                 ga_result = genetic_algorithm(
                     product, final_pop, final_gen, final_cr, final_mr,
-                    daily_sales, daily_purchases,
+                    daily_sales, daily_purchases, start_date, end_date
                 )
 
                 (_, _, _, _, _,
@@ -1759,13 +1763,13 @@ def periodic_view(request):
                     combined_purchases_list[day]  += purchases_list[day]
                     combined_sales_list[day]      += sales_list[day]
 
-                    multiple_inventory_data.append({
-                        'inventory':  inventory_level_list[:best_T],
-                        'purchases':  purchases_list[:best_T],
-                        'sales':      sales_list[:best_T],
-                        'item_index': item_index,
-                        'item_name':  item.name
-                    })
+                multiple_inventory_data.append({
+                    'inventory':  inventory_level_list[:best_T],
+                    'purchases':  purchases_list[:best_T],
+                    'sales':      sales_list[:best_T],
+                    'item_index': item_index,
+                    'item_name':  item.name
+                })
 
                 if item_index == 1:
                     for day in range(min(best_T, len(inventory_level_list))):
@@ -1888,39 +1892,106 @@ def periodic_view(request):
                     'bo_duration':           round(bo_meta['bo_duration'], 2),
                 })
 
+            # FIRST DATA
+            # After processing all products for this outlet, generate the plot
+            fig, ax = plt.subplots(figsize=(18, 6))
+            ax.plot(first_combined_inventory_level, linewidth=1.5, color="#FFC000")
+            ax.set_xlim(0, first_T)  # Ensure it stays within first_T days
+            ax.set_ylabel('Demand Level (pcs)', fontsize=18)
+            ax.set_xlabel('Day', fontsize=18)
+
+            # Convert the plot to a PNG image and encode it in base64
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            first_outlet_restock_plot = base64.b64encode(buf.read()).decode('utf-8')
+            buf.close()
+
+            # BEST DATA
+            # After processing all products for this outlet, generate the plot
+            fig, ax = plt.subplots(figsize=(18, 6))
+            ax.plot(combined_inventory_level, linewidth=1.5)
+            ax.set_xlim(0, best_T)  # Ensure it stays within best_T days
+            ax.set_ylabel('Demand Level (pcs)', fontsize=18)
+            ax.set_xlabel('Day', fontsize=18)
+
+            # Convert the plot to a PNG image and encode it in base64
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            outlet_restock_plot = base64.b64encode(buf.read()).decode('utf-8')
+            buf.close()
+
             data_all.append({
-                    'data':                           data,
-                    'first_combined_inventory_level': first_combined_inventory_level,
-                    'combined_inventory_level':       combined_inventory_level,
-                    'combined_purchases_list':        combined_purchases_list,
-                    'combined_sales_list':            combined_sales_list,
-                    'first_single_inventory_level':   first_single_inventory_level,
-                    'single_inventory_level':         single_inventory_level,
-                    'single_purchases_list':          single_purchases_list,
-                    'single_sales_list':              single_sales_list,
-                    'first_multiple_inventory_data':  first_multiple_inventory_data,
-                    'multiple_inventory_data':        multiple_inventory_data,
-                    'first_total_order':              sum(i['first_c_order']         for i in data),
-                    'first_total_hold':               sum(i['first_c_hold']          for i in data),
-                    'first_total_stockout':           sum(i['first_c_stockout']      for i in data),
-                    'first_total_all':                sum(i['first_c_total']         for i in data),
-                    'first_total_purchases_freq':     sum(i['first_purchases_freq']  for i in data),
-                    'first_total_purchases_total':    sum(i['first_purchases_total'] for i in data),
-                    'first_total_stockout_total':     sum(i['first_stockout_total']  for i in data),
-                    'first_total_calc_duration':      sum(i['first_calc_duration']   for i in data),
-                    'total_order':                    sum(i['c_order']            for i in data),
-                    'total_hold':                     sum(i['c_hold']             for i in data),
-                    'total_stockout':                 sum(i['c_stockout']         for i in data),
-                    'total_all':                      sum(i['c_total']            for i in data),
-                    'total_purchases_freq':           sum(i['purchases_freq']     for i in data),
-                    'total_purchases_total':          sum(i['purchases_total']    for i in data),
-                    'total_stockout_total':           sum(i['stockout_total']     for i in data),
-                    'total_calc_duration':            sum(i['best_calc_duration'] for i in data),
-                })
+                'data':                           data,
+                'first_combined_inventory_level': first_combined_inventory_level,
+                'combined_inventory_level':       combined_inventory_level,
+                'combined_purchases_list':        combined_purchases_list,
+                'combined_sales_list':            combined_sales_list,
+                'first_single_inventory_level':   first_single_inventory_level,
+                'single_inventory_level':         single_inventory_level,
+                'single_purchases_list':          single_purchases_list,
+                'single_sales_list':              single_sales_list,
+                'first_multiple_inventory_data':  first_multiple_inventory_data,
+                'multiple_inventory_data':        multiple_inventory_data,
+                'first_total_order':              sum(i['first_c_order']         for i in data),
+                'first_total_hold':               sum(i['first_c_hold']          for i in data),
+                'first_total_stockout':           sum(i['first_c_stockout']      for i in data),
+                'first_total_all':                sum(i['first_c_total']         for i in data),
+                'first_total_purchases_freq':     sum(i['first_purchases_freq']  for i in data),
+                'first_total_purchases_total':    sum(i['first_purchases_total'] for i in data),
+                'first_total_stockout_total':     sum(i['first_stockout_total']  for i in data),
+                'first_total_calc_duration':      sum(i['first_calc_duration']   for i in data),
+                'total_order':                    sum(i['c_order']            for i in data),
+                'total_hold':                     sum(i['c_hold']             for i in data),
+                'total_stockout':                 sum(i['c_stockout']         for i in data),
+                'total_all':                      sum(i['c_total']            for i in data),
+                'total_purchases_freq':           sum(i['purchases_freq']     for i in data),
+                'total_purchases_total':          sum(i['purchases_total']    for i in data),
+                'total_stockout_total':           sum(i['stockout_total']     for i in data),
+                'total_calc_duration':            sum(i['best_calc_duration'] for i in data),
+                'first_restock_plot':             first_outlet_restock_plot,
+                'restock_plot':                   outlet_restock_plot,
+            })
 
             total_data = list(total_data_dict.values())
 
-            # ---- Adjust outlet 3 & generate outlet plots --------------- #
+            for dt in total_data:
+                span_f = dt['first_timespan']
+                span_b = dt['timespan']
+
+                fig, ax = plt.subplots(figsize=(18, 6))
+                ax.plot(dt['first_stock_history'][:span_f], linewidth=1.5, color="#FFC000")
+                ax.set_xlim(0, span_f)
+                ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
+                ax.set_xlabel('Day', fontsize=18)
+                buf = io.BytesIO()
+                fig.savefig(buf)
+                buf.seek(0)
+                dt['first_inventory_level_plot'] = base64.b64encode(buf.read()).decode()
+                buf.close()
+                plt.close()
+
+                dt['first_lost_order_plot'] = _plot_stockout_hist(
+                    dt['first_stockout_mean'], 'Total Stockout'
+                )
+
+                fig, ax = plt.subplots(figsize=(18, 6))
+                ax.plot(dt['stock_history'][:span_b], linewidth=1.5, color="#FFC000")
+                ax.set_xlim(0, span_b)
+                ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
+                ax.set_xlabel('Day', fontsize=18)
+                buf = io.BytesIO()
+                fig.savefig(buf)
+                buf.seek(0)
+                dt['inventory_level_plot'] = base64.b64encode(buf.read()).decode()
+                buf.close()
+                plt.close()
+
+                dt['lost_order_plot'] = _plot_stockout_hist(
+                    dt['stockout_mean'], 'Total Stockout'
+                )
+
             for dt in data_all:
                 for inv_key, p_key, s_key in [
                     ('combined_inventory_level', 'combined_purchases_list', 'combined_sales_list'),
@@ -1938,6 +2009,12 @@ def periodic_view(request):
                             cur -= sale
                             new_inv.append(cur)
                         dt[inv_key] = new_inv
+
+            for entry in data_all:
+                for item in entry['first_multiple_inventory_data']:
+                    item['first_inventory_plot'] = _plot_inventory_level(item['inventory'])
+                for item in entry['multiple_inventory_data']:
+                    item['inventory_plot'] = _plot_inventory_level(item['inventory'])
 
             total_duration = time.time() - total_start
 
@@ -2250,7 +2327,7 @@ def calculate_inventory_levels_rss(demand_result, R, s, S):
 # ---------------------------------------------------------------------------
 # Genetic-algorithm operators
 # ---------------------------------------------------------------------------
-def log_scaled_mutation(individual, mutation_rate, sigma=0.1, lower_bound=1, upper_bound=1000):
+def log_scaled_mutation(individual, mutation_rate, sigma=0.1, lower_bound=1, upper_bound=10000):
     """
     Log-scaled mutation on numeric genes.
     Index 5 (T) is skipped — preserved as an integer choice.
@@ -2285,7 +2362,7 @@ def fix_S_s(individual):
 # ---------------------------------------------------------------------------
 def genetic_algorithm(product_data, population_size, num_generations,
         crossover_rate, mutation_rate,
-        daily_sales, daily_purchases, stockout_weight=500.0):
+        daily_sales, daily_purchases, start_date, end_date, stockout_weight=500.0):
     """
     Run a genetic algorithm to minimise total inventory cost for the
     periodic (R, s, S) review policy.
@@ -2302,7 +2379,7 @@ def genetic_algorithm(product_data, population_size, num_generations,
     first_R = round(first_R_min)
     first_s = round(first_s_min)
     first_S = round(first_S_min)
-    first_T = 60
+    first_T = (end_date - start_date).days + 1
 
     (first_inventory_level_list, _, first_tot_lost, first_purchases_freq, first_purchases_total, first_restock_data) = (
         calculate_first_inventory_levels_rss(
@@ -2443,7 +2520,7 @@ def _plot_inventory_level(inventory_level_list, upper_line, x_limit):
 def _plot_stockout_hist(values, label='Stockout'):
     fig, ax = plt.subplots(figsize=(6, 4))
     if values:
-        sns.histplot(values, kde=False, color="#097969", ax=ax)
+        sns.histplot(values, kde=False, color="#FFC000", ax=ax)
         mean_val = np.mean(values)
         ax.set_title(f'{label} : Mean {mean_val:.3f}')
         ax.axvline(x=mean_val, color='k', alpha=0.5, ls='--')
@@ -2456,7 +2533,7 @@ def _plot_stockout_hist(values, label='Stockout'):
     plt.close()
     return encoded
 
-def _bo_evaluate(params, product_data, daily_sales, daily_purchases, stockout_weight=BO_STOCKOUT_WEIGHT):
+def _bo_evaluate(params, product_data, daily_sales, daily_purchases, start_date, end_date, stockout_weight=BO_STOCKOUT_WEIGHT):
     """
     Jalankan GA dengan hyperparameter *params* dan kembalikan composite cost.
     pop_size dan num_generations di-cap ke inner budget agar cepat.
@@ -2470,8 +2547,8 @@ def _bo_evaluate(params, product_data, daily_sales, daily_purchases, stockout_we
         result         = genetic_algorithm(
             product_data, pop_size, num_generations,
             float(crossover_rate), float(mutation_rate),
-            daily_sales, daily_purchases,
-            stockout_weight=stockout_weight,
+            daily_sales, daily_purchases, start_date, end_date,
+            stockout_weight=stockout_weight
         )
         best_total_cost = result[16]
         tot_lost        = result[9]
@@ -2483,7 +2560,7 @@ def _bo_evaluate(params, product_data, daily_sales, daily_purchases, stockout_we
 # ---------------------------------------------------------------------------
 # Fungsi utama BO — pengganti pso_optimize_hyperparameters()
 # ---------------------------------------------------------------------------
-def bo_optimize_hyperparameters(product_data, daily_sales, daily_purchases, n_calls=BO_N_CALLS, n_initial_points=BO_N_INITIAL, stockout_weight=BO_STOCKOUT_WEIGHT, random_state=42):
+def bo_optimize_hyperparameters(product_data, daily_sales, daily_purchases, start_date, end_date, n_calls=BO_N_CALLS, n_initial_points=BO_N_INITIAL, stockout_weight=BO_STOCKOUT_WEIGHT, random_state=42):
     """
     Jalankan Bayesian Optimization untuk mencari hyperparameter GA terbaik.
 
@@ -2510,7 +2587,7 @@ def bo_optimize_hyperparameters(product_data, daily_sales, daily_purchases, n_ca
     # Bungkus evaluator agar menerima list positional args dari gp_minimize
     def objective(params):
         return _bo_evaluate(
-            params, product_data, daily_sales, daily_purchases, stockout_weight
+            params, product_data, daily_sales, daily_purchases, start_date, end_date, stockout_weight
         )
 
     result = gp_minimize(
@@ -2541,7 +2618,7 @@ def bo_optimize_hyperparameters(product_data, daily_sales, daily_purchases, n_ca
 # ---------------------------------------------------------------------------
 # Versi global (multi-produk) — pengganti pso_optimize_hyperparameters_global()
 # ---------------------------------------------------------------------------
-def bo_optimize_hyperparameters_global(products_data,
+def bo_optimize_hyperparameters_global(products_data, start_date, end_date,
                                         num_generations=50,
                                         n_calls=BO_N_CALLS,
                                         n_initial_points=BO_N_INITIAL,
@@ -2557,7 +2634,7 @@ def bo_optimize_hyperparameters_global(products_data,
     def objective(params):
         scores = []
         for product_data, daily_sales, daily_purchases in products_data:
-            s = _bo_evaluate(params, product_data, daily_sales, daily_purchases, stockout_weight)
+            s = _bo_evaluate(params, product_data, daily_sales, daily_purchases, start_date, end_date, stockout_weight)
             if s < float('inf'):
                 scores.append(s)
         # Kembalikan rata-rata; jika semua gagal, kembalikan penalti besar
@@ -2590,7 +2667,7 @@ def bo_optimize_hyperparameters_global(products_data,
 # ---------------------------------------------------------------------------
 # Convenience wrapper — pengganti run_with_pso()
 # ---------------------------------------------------------------------------
-def run_with_bo(product_data, daily_sales, daily_purchases,
+def run_with_bo(product_data, daily_sales, daily_purchases, start_date, end_date,
                 user_pop_size, user_num_gen, user_cr, user_mr,
                 use_bo=True,
                 bo_n_calls=BO_N_CALLS,
@@ -2619,7 +2696,7 @@ def run_with_bo(product_data, daily_sales, daily_purchases,
         bo_start = time.time()
 
         best_params, best_score, history = bo_optimize_hyperparameters(
-            product_data, daily_sales, daily_purchases,
+            product_data, daily_sales, daily_purchases, start_date, end_date,
             n_calls         = bo_n_calls,
             n_initial_points= bo_n_initial,
             stockout_weight = stockout_weight,
@@ -2643,8 +2720,8 @@ def run_with_bo(product_data, daily_sales, daily_purchases,
 
     ga_result = genetic_algorithm(
         product_data, final_pop, final_gen, final_cr, final_mr,
-        daily_sales, daily_purchases,
-        stockout_weight=stockout_weight,
+        daily_sales, daily_purchases, start_date, end_date,
+        stockout_weight=stockout_weight
     )
 
     return ga_result, bo_meta
@@ -2691,3 +2768,18 @@ def _parse_post_int(post, key, default):
 
 def format_seconds(seconds):
     return str(timedelta(seconds=round(seconds)))
+
+def _plot_inventory_level(inventory_list, color="#FFC000"):
+    """Generate a base64 PNG line chart for a single item's inventory level."""
+    fig, ax = plt.subplots(figsize=(18, 6))
+    ax.plot(inventory_list, linewidth=1.5, color=color)
+    ax.set_xlim(0, len(inventory_list))
+    ax.set_ylabel('Inventory Level (pcs)', fontsize=18)
+    ax.set_xlabel('Day', fontsize=18)
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight')
+    buf.seek(0)
+    encoded = base64.b64encode(buf.read()).decode()
+    buf.close()
+    plt.close(fig)
+    return encoded
