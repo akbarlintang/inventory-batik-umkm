@@ -7,6 +7,21 @@
 
 {% load static %}
 
+<style>
+    .custom-control {
+        padding-left: 0;
+    }
+
+    .custom-switch .custom-control-label::before {
+        left: 0;
+        background-color: #fff;
+    }
+
+    .custom-switch .custom-control-label::after {
+        left: 2px;
+    }
+</style>
+
 {% endblock stylesheets %}
 
 {% block content %}

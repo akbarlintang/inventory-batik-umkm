@@ -9,80 +9,168 @@
 
 {% load humanize %}
 
+<style>
+    .badge-improvement {
+        font-size: 0.75rem;
+        padding: 3px 7px;
+    }
+    .col-before { background-color: #fff8e1; }
+    .col-after  { background-color: #e8f5e9; }
+    th.group-before { background-color: #f9a825; color: #fff; }
+    th.group-after  { background-color: #388e3c; color: #fff; }
+    .saving-positive { color: #2e7d32; font-weight: 600; }
+    .saving-negative { color: #c62828; font-weight: 600; }
+    .summary-card {
+        border-radius: 8px;
+        padding: 16px 20px;
+    }
+</style>
+
 {% endblock stylesheets %}
 
 {% block content %}
 
 <div class="pt-5">
-    <div class="container">
+    <div class="container-fluid">
         <h1>Periodic Review System</h1>
-
-        <!-- blok untuk menampilkan notifikasi pesan sukses -->
+        <p class="text-muted">Perbandingan hasil sebelum dan sesudah optimasi PSO</p>
+ 
+        {% if messages %}
         <div>
-            {% if messages %}
-            
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    {{ message | safe }}
-                </div>
-                {% endfor %}
-            
-            {% endif %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <button type="button" class="close" data-dismiss="alert">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                {{ message|safe }}
+            </div>
+            {% endfor %}
         </div>
+        {% endif %}
 
-        <br>
-        
-        <!-- Tabel RsS -->
-        <div>
-            <table class="table table-bordered table-striped">
+        <!-- Ringkasan Total -->
+        {% if data %}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="summary-card bg-warning text-white">
+                    <div class="text-sm mb-1">Total Biaya Awal (EOQ)</div>
+                    <div class="h5 mb-0 font-weight-bold">Rp {{ initial_cost_total|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card bg-success text-white">
+                    <div class="text-sm mb-1">Total Biaya Setelah PSO</div>
+                    <div class="h5 mb-0 font-weight-bold">Rp {{ optimized_cost_total|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card bg-info text-white">
+                    <div class="text-sm mb-1">Total Penghematan</div>
+                    <div class="h5 mb-0 font-weight-bold">Rp {{ total_penghematan|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card bg-primary text-white">
+                    <div class="text-sm mb-1">Efisiensi PSO</div>
+                    <div class="h5 mb-0 font-weight-bold">{{ total_penghematan_pct }}%</div>
+                </div>
+            </div>
+        </div>
+ 
+        <!-- Tabel Perbandingan -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm text-center">
                 <thead>
                     <tr>
-                        <th width="5%" class="text-center">No.</th>
-                        <th class="text-center">Nama Barang</th>
-                        <th width="20%" class="text-center">Biaya Inventory</th>
-                        <th width="15%" class="text-center">Reorder Point (s)</th>
-                        <th width="15%" class="text-center">Stok Maksimum (S)</th>
-                        <th width="15%" class="text-center">Review Interval (R) (hari)</th>
+                        <th rowspan="2" class="align-middle" width="4%">No.</th>
+                        <th rowspan="2" class="align-middle text-left" width="14%">Nama Barang</th>
+                        <!-- Grup Sebelum PSO -->
+                        <th colspan="4" class="group-before">Sebelum PSO (EOQ)</th>
+                        <!-- Grup Sesudah PSO -->
+                        <th colspan="4" class="group-after">Sesudah PSO (Optimal)</th>
+                        <!-- Penghematan -->
+                        <th colspan="2" class="align-middle bg-info text-white">Penghematan</th>
+                    </tr>
+                    <tr>
+                        <!-- <th class="col-before">R / T₀</th> -->
+                        <th class="col-before">Review Interval (R)</th>
+                        <th class="col-before">Reorder Point (s)</th>
+                        <th class="col-before">Stok Maksimum (S)</th>
+                        <!-- <th class="col-before">Stockout</th> -->
+                        <th class="col-before">Biaya Inventory</th>
+
+                        <!-- <th class="col-before">R / T₀</th> -->
+                        <th class="col-after">Review Interval (R)</th>
+                        <th class="col-after">Reorder Point (s)</th>
+                        <th class="col-after">Stok Maksimum (S)</th>
+                        <!-- <th class="col-after">Stockout</th> -->
+                        <th class="col-after">Biaya Inventory</th>
+
+                        <th>Rp</th>
+                        <th>%</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- daftar task-->
-                    {% if data %}
                     {% for dt in data %}
                     <tr>
-                        <td class="text-center">{{ forloop.counter }}</td>
-                        <td>{{ dt.nama_barang }}</td>
-                        <td class="text-right">Rp {{ dt.biaya_inventory|intcomma }}</td>
-                        <td class="text-center">{{ dt.s }}</td>
-                        <td class="text-center">{{ dt.S }}</td>
-                        <td class="text-center">
-                            {% if dt.To == 0 %}
-                                1
-                            {% else %}
-                                {{ dt.To }}
-                            {% endif %}
-                        </td>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="text-left">{{ dt.nama_barang }}</td>
 
+                        <!-- Sebelum PSO -->
+                        <!-- <td class="col-before">
+                            {{ dt.initial_review_interval_days }} hari
+                            <br>
+                            <small class="text-muted">T₀={{ dt.initial_To }}</small>
+                        </td> -->
+                        <td class="col-before">{{ dt.initial_review_interval_days }} hari</td>
+                        <td class="col-before">{{ dt.initial_s }}</td>
+                        <td class="col-before">{{ dt.initial_S }}</td>
+                        <!-- <td class="col-before">{{ dt.initial_N }}</td> -->
+                        <td class="col-before text-right">Rp {{ dt.initial_biaya_inventory|intcomma }}</td>
+ 
+                        <!-- Sesudah PSO -->
+                        <!-- <td class="col-after">
+                            {{ dt.optimal_review_interval_days }} hari
+                            <br>
+                            <small class="text-muted">T₀={{ dt.optimal_To }}</small>
+                        </td> -->
+                        <td class="col-after">{{ dt.optimal_review_interval_days }} hari</td>
+                        <td class="col-after">{{ dt.optimal_s }}</td>
+                        <td class="col-after">{{ dt.optimal_S }}</td>
+                        <!-- <td class="col-after">{{ dt.optimal_N }}</td> -->
+                        <td class="col-after text-right">Rp {{ dt.optimal_biaya_inventory|intcomma }}</td>
+ 
+                        <!-- Penghematan -->
+                        <td class="{% if dt.penghematan >= 0 %}saving-positive{% else %}saving-negative{% endif %}">
+                            {% if dt.penghematan >= 0 %}↓{% else %}↑{% endif %}
+                            Rp {{ dt.penghematan|intcomma }}
+                        </td>
+                        <td class="{% if dt.penghematan_persen >= 0 %}saving-positive{% else %}saving-negative{% endif %}">
+                            {{ dt.penghematan_persen }}%
+                        </td>
                     </tr>
                     {% endfor %}
-                    <!-- <tr>
-                        <td class="text-center" colspan="2">TOTAL</td>
-                        <td class="text-right">Rp {{ inventory_cost_total|intcomma }}</td>
-                        <td class="text-right"></td>
-                        <td class="text-right"></td>
-                        <td class="text-right"></td>
-                    </tr> -->
-                    {% else %}
-                    <tr>
-                        <td colspan="5">Data tidak ditemukan.</td>
+ 
+                    <!-- Baris Total -->
+                    <tr class="font-weight-bold">
+                        <td colspan="2" class="text-center">TOTAL</td>
+
+                        <td colspan="3" class="col-before"></td>
+                        <td class="col-before text-right">Rp {{ initial_cost_total|intcomma }}</td>
+
+                        <td colspan="3" class="col-after"></td>
+                        <td class="col-after text-right">Rp {{ optimized_cost_total|intcomma }}</td>
+
+                        <td class="saving-positive">Rp {{ total_penghematan|intcomma }}</td>
+                        <td class="saving-positive">{{ total_penghematan_pct }}%</td>
                     </tr>
-                    {% endif %}
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="alert alert-warning">Data tidak ditemukan.</div>
+        {% endif %}
+ 
     </div>
 </div>
 

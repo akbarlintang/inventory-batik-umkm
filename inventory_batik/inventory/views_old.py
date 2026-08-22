@@ -1157,342 +1157,261 @@ def periodic_view(request):
         #     array.append(array_data)
 
         if algorithm == 'pso':
-            items     = Item.objects.filter(type="JADI")
+            items = Item.objects.filter(type="JADI")
 
-            for item in items:
-                sales = Sales.objects.filter(item_id=item.id)
+            data = []
 
-                sales_list      = [sale.amount for sale in sales]
-                total_sales     = sum(sales_list)
-                standar_deviasi = (np.std(sales_list) if len(sales_list) > 1 else (sales_list[0] if sales_list else 1))
+            initial_cost_total = 0
+            optimized_cost_total = 0
 
-                array.append({
-                    'nama_barang':      item.name,
-                    'biaya_pesan':      item.biaya_pesan,
-                    'biaya_order':      item.biaya_pesan,
-                    'permintaan_baku':  total_sales,
-                    'biaya_simpan':     2000,
-                    'biaya_kekurangan': round((item.price * 7.5 / 100) + item.price),
-                    'harga_produk':     item.price,
-                    'lead_time':        item.lead_time / 100,
-                    'standar_deviasi':  standar_deviasi,
+            # Ambil rentang periode sales keseluruhan
+            sales_range = Sales.objects.aggregate(
+                min_date=Min('created_at'),
+                max_date=Max('created_at'),
+            )
+
+            min_date = sales_range['min_date']
+            max_date = sales_range['max_date']
+
+            if not min_date or not max_date:
+                return render(request, 'periodic/calculation.html', {
+                    'data': [],
+                    'message': 'Data sales tidak ditemukan.'
                 })
 
-            inventory_cost_total = 0
+            start_date = min_date.date()
+            end_date = max_date.date()
 
-            for x in array:
-                nama_barang = x['nama_barang']
-                biaya_pesan = x['biaya_pesan']
-                if x['permintaan_baku'] == 0 :
-                    permintaan_baku = 1
-                else :
-                    permintaan_baku = x['permintaan_baku'] 
-                
-                biaya_simpan = x['biaya_simpan']
-                biaya_kekurangan = x['biaya_kekurangan']
-                # harga_material = x['harga_material']
-                harga_material = x['harga_produk']
-                lead_time = x['lead_time']
-                standar_deviasi = x['standar_deviasi']
+            period_days = (end_date - start_date).days + 1
+            period_days = max(1, period_days)
 
-                class Particle:
-                    def __init__(self,x0):
-                        self.position_i=[]          # particle position
-                        self.velocity_i=[]          # particle velocity
-                        self.pos_best_i=[]          # best position individual
-                        self.err_best_i=-1          # best error individual
-                        self.err_i=-1               # error individual
+            # Hyperparameter PSO
+            min_R = 1
+            max_R = 30
+            num_particles = 40
+            maxiter = 100
 
-                        for i in range(0,num_dimensions):
-                            self.velocity_i.append(random.uniform(-1,1))
-                            self.position_i.append(x0[i])
+            # Asumsi biaya
+            h_per_month = 2000
+            holding_cost_per_unit_per_day = h_per_month / 30
 
-                    # evaluate current fitness
-                    def evaluate(self,costFunc):
-                        self.err_i=costFunc(self.position_i)
+            for item in items:
+                # =====================================================
+                # 1. Aggregate demand harian
+                # =====================================================
+                sales_qs = (
+                    Sales.objects
+                    .filter(item_id=item.id)
+                    .order_by('created_at')
+                )
 
-                        # check to see if the current position is an individual best
-                        if self.err_i < self.err_best_i or self.err_best_i==-1:
-                            self.pos_best_i=self.position_i
-                            self.err_best_i=self.err_i
+                if not sales_qs.exists():
+                    continue
 
-                    # update new particle velocity
-                    def update_velocity(self,pos_best_g):
-                        w=0.5       # constant inertia weight (how much to weigh the previous velocity)
-                        c1=1        # cognative constant
-                        c2=2        # social constant
+                sales_by_day = defaultdict(float)
 
-                        for i in range(0,num_dimensions):
-                            r1=random.random()
-                            r2=random.random()
+                for sale in sales_qs:
+                    if not sale.created_at:
+                        continue
 
-                            vel_cognitive=c1*r1*(self.pos_best_i[i]-self.position_i[i])
-                            vel_social=c2*r2*(pos_best_g[i]-self.position_i[i])
-                            self.velocity_i[i]=w*self.velocity_i[i]+vel_cognitive+vel_social
-
-                    # update the particle position based off new velocity updates
-                    def update_position(self,bounds):
-                        for i in range(0,num_dimensions):
-                            self.position_i[i]=self.position_i[i]+self.velocity_i[i]
-
-                            # adjust maximum position if necessary
-                            if self.position_i[i]>bounds[i][1]:
-                                self.position_i[i]=bounds[i][1]
-
-                            # adjust minimum position if neseccary
-                            if self.position_i[i] < bounds[i][0]:
-                                self.position_i[i]=bounds[i][0]
-
-                class PSO():
-                    def __new__(self,costFunc,x0,bounds,num_particles,maxiter):
-                        global num_dimensions
-
-                        num_dimensions=len(x0)
-                        err_best_g=-1                   # best error for group
-                        pos_best_g=[]                   # best position for group
-
-                        # establish the swarm
-                        swarm=[]
-                        for i in range(0,num_particles):
-                            swarm.append(Particle(x0))
-
-                        # begin optimization loop
-                        i=0
-                        while i < maxiter:
-                            #print i,err_best_g
-                            # cycle through particles in swarm and evaluate fitness
-                            for j in range(0,num_particles):
-                                swarm[j].evaluate(costFunc)
-
-                                # determine if current particle is the best (globally)
-                                if swarm[j].err_i < err_best_g or err_best_g == -1:
-                                    pos_best_g=list(swarm[j].position_i)
-                                    err_best_g=float(swarm[j].err_i)
-
-                            # cycle through swarm and update velocities and position
-                            for j in range(0,num_particles):
-                                swarm[j].update_velocity(pos_best_g)
-                                swarm[j].update_position(bounds)
-                            i+=1
-
-                        # print final results
-                        # print ('FINAL:')
-                        # print (pos_best_g)
-                        # print (err_best_g)
-
-                        return err_best_g
-                
-                def func1(x):
-                    # Hitung nilai To
-                    to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-
-                    # To = round(to * 100)
-
-                    return to
-
-                def func2(x):
-                    T_temp = []
-                    To_temp = []
-                    s_temp = []
-                    S_temp = []
-                    for i in range(5):
-                        # Hitung nilai To
-                        to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-                        
-                        if i == 0:
-                            to = to - 0.002
-                        elif i == 1:
-                            to = to - 0.001
-                        elif i == 3:
-                            to = to + 0.001
-                        elif i == 4:
-                            to = to + 0.002
-
-                        # Hitung nilai alpha dan R
-                        alpha = to * biaya_simpan / biaya_kekurangan
-                        z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                        fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                        # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                        wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                        R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                        # Hitung total biaya total persediaan
-                        N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
-
-                        T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                        # Hitung nilai XR, XRL, dan sigma_RL
-                        XR = to * permintaan_baku
-                        XRL = (to + lead_time) * permintaan_baku
-                        sigma_RL = (to + lead_time) * standar_deviasi
-
-                        Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
-                        z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-
-                        if z <= 0:
-                            Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
-                        else: 
-                            Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-                        
-
-                        k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
-
-                        So = round(XRL + (k * sigma_RL))
-
-                        To = to * 100
-                        s = round(Qp)
-                        S = round(Sp + Qp)
-
-                        T_temp.append(T)
-                        To_temp.append(To)
-                        s_temp.append(s)
-                        S_temp.append(S)
-                    
-                    for idx, temp in enumerate(T_temp):
-                        if temp == min(T_temp):
-                            index = idx
-                            break
-
-                    return s_temp[index]
-                
-                def func3(x):
-                    T_temp = []
-                    To_temp = []
-                    s_temp = []
-                    S_temp = []
-                    for i in range(5):
-                        # Hitung nilai To
-                        to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
-
-                        if i == 0:
-                            to = to - 0.002
-                        elif i == 1:
-                            to = to - 0.001
-                        elif i == 3:
-                            to = to + 0.001
-                        elif i == 4:
-                            to = to + 0.002
-
-                        # Hitung nilai alpha dan R
-                        alpha = to * biaya_simpan / biaya_kekurangan
-                        z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                        fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                        # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                        wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                        R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                        # Hitung total biaya total persediaan
-                        N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
-
-                        T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                        # Hitung nilai XR, XRL, dan sigma_RL
-                        XR = to * permintaan_baku
-                        XRL = (to + lead_time) * permintaan_baku
-                        sigma_RL = (to + lead_time) * standar_deviasi
-
-                        Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / biaya_simpan) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
-                        z = round(math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan)), 2)
-                        if z <= 0:
-                            Sp = round((0.973 * XRL) + (sigma_RL * ((0.183) + 1.063 - (2.192))), 2)
-                        else: 
-                            Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
-                        k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
-
-                        So = round(XRL + (k * sigma_RL))
-
-                        To = round(to * 100)
-                        s = round(Sp)
-                        S = round(Sp + Qp)
-
-                        T_temp.append(T)
-                        To_temp.append(To)
-                        s_temp.append(s)
-                        S_temp.append(S)
-                    
-                    for idx, temp in enumerate(T_temp):
-                        if temp == min(T_temp):
-                            index = idx
-                            break
-
-                    return S_temp[index]
-                
-                def find_ss(x):
-                    # Hitung nilai To
-                    to = min_to
-
-                    # Hitung nilai alpha dan R
-                    alpha = to * biaya_simpan / biaya_kekurangan
-                    z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
-
-                    # fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
-                    fz_alpha = round(norm.pdf(z_alpha , loc = 0 , scale = 1 ), 5)
-                    wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
-                    # wz_alpha = round((fz_alpha - 0.00001), 5)
-
-                    R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
-
-                    # Hitung total biaya total persediaan
-                    N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)))))
-
-                    T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
-
-                    # Hitung nilai XR, XRL, dan sigma_RL
-                    XR = to * permintaan_baku
-                    XRL = (to + lead_time) * permintaan_baku
-                    sigma_RL = (to + lead_time) * standar_deviasi
-
-                    Qp = round(1.3 * (XR ** 0.494) * ((biaya_pesan / (harga_material * biaya_simpan)) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116),2)
-                    z = math.sqrt((Qp * biaya_simpan) / (sigma_RL * biaya_kekurangan))
-                    if z <= 0:
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / 1) + 1.063 - (2.192 * z))), 2)
+                    # Kalau created_at adalah datetime
+                    if hasattr(sale.created_at, 'date'):
+                        day = sale.created_at.date()
                     else:
-                        Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
+                        # fallback kalau ternyata created_at berupa string
+                        day = datetime.fromisoformat(str(sale.created_at)).date()
 
-                    k = round(biaya_simpan / (biaya_simpan + biaya_kekurangan), 2)
+                    sales_by_day[day] += float(sale.amount or 0)
 
-                    So = round(XRL + (k * sigma_RL),2)
+                if not sales_by_day:
+                    continue
 
-                    s = round(Sp,2)
-                    S = round(Sp + Qp,2)
+                # Pakai range global yang sudah kamu hitung sebelumnya
+                demand_list = []
+                current_date = start_date
 
-                    temp = (permintaan_baku * harga_material) + (biaya_pesan / to)
-                    return temp, s, S
-                
-                initial=[0,0]               # initial starting location [x1,x2...]
-                bounds=[(-10,10),(-10,10)]  # input bounds [(x1_min,x1_max),(x2_min,x2_max)...]
-                min_to = PSO(func1,initial,bounds,num_particles=15,maxiter=30)
-                s = PSO(func2,initial,bounds,num_particles=15,maxiter=30)
-                S = PSO(func3,initial,bounds,num_particles=15,maxiter=30)
+                while current_date <= end_date:
+                    demand_list.append(sales_by_day.get(current_date, 0))
+                    current_date += timedelta(days=1)
 
-                biaya_inventory = find_ss(x)
-                To = min_to * 100
+                if sum(demand_list) <= 0:
+                    continue
 
-                biaya_inventory = calculate_inventory_cost(x, min_to)
+                # =====================================================
+                # 2. Parameter dasar
+                # =====================================================
+                D = sum(demand_list)
+                daily_mean = np.mean(demand_list)
+                sigma = np.std(demand_list, ddof=1) if len(demand_list) > 1 else 0
 
-                inventory_cost_total += biaya_inventory
+                A = item.biaya_pesan or 0
+                P = item.price or 0
 
-                temp = {
-                    'To': round(To),
-                    's': round(s),
-                    'S': round(S),
-                    'nama_barang': nama_barang,
-                    'biaya_inventory': round(biaya_inventory),
+                # Biaya kekurangan.
+                # Untuk inventory murni, pakai penalty kekurangan saja.
+                # Kalau kamu memang mau menghitung lost sales sebesar harga barang,
+                # bisa ubah menjadi: Cu = P + (P * 7.5 / 100)
+                Cu = P * 7.5 / 100
 
-                    # 'biaya_inventory_min': round(min(inventory_cost_list)),
-                    # 'biaya_inventory_mean': round(np.mean(inventory_cost_list)),
-                    # 'biaya_inventory_std': round(np.std(inventory_cost_list)),
-                }
+                lead_time_days = item.lead_time or 0
 
-                data.append(temp)
+                # Untuk rumus Hadley, h harus biaya simpan per unit selama periode data.
+                h = holding_cost_per_unit_per_day * period_days
+
+                # Lead time dalam fraksi periode untuk Hadley.
+                L = lead_time_days / period_days if period_days > 0 else 0
+
+                # =====================================================
+                # 3. Initial R, s, S dari Hadley / EOQ
+                # =====================================================
+                initial_to = find_initial_to(
+                    A=A,
+                    D=D,
+                    h=h,
+                )
+
+                initial_days = to_to_days(initial_to, period_days)
+                initial_days = max(min_R, min(max_R, initial_days))
+
+                # Hitung ulang T0 berdasarkan R hari yang sudah dibulatkan
+                initial_to = days_to_to(initial_days, period_days)
+
+                ss_initial = calculate_s_s_policy(
+                    to=initial_to,
+                    D=D,
+                    A=A,
+                    h=h,
+                    Cu=Cu,
+                    L=L,
+                    sigma=sigma,
+                )
+
+                initial_s = max(0, int(round(ss_initial['s'])))
+                initial_S = max(initial_s + 1, int(round(ss_initial['S'])))
+
+                # Simulasikan initial policy supaya basis biaya sama dengan PSO
+                initial_simulation = simulate_inventory_rss(
+                    demand_list=demand_list,
+                    R=initial_days,
+                    s=initial_s,
+                    S=initial_S,
+                    lead_time_days=lead_time_days,
+                    ordering_cost=A,
+                    holding_cost_per_unit_per_day=holding_cost_per_unit_per_day,
+                    shortage_cost_per_unit=Cu,
+                    initial_stock=initial_S,
+                )
+
+                initial_cost = initial_simulation['total_inventory_cost']
+
+                # =====================================================
+                # 4. PSO mencari kombinasi R, s, S optimal
+                # =====================================================
+                # Bound stok jangan terlalu kecil, supaya PSO punya ruang mencari.
+                # Rumus ini bisa kamu sesuaikan kalau hasil S terlalu besar/kecil.
+                max_stock_bound = max(
+                    10,
+                    int(D),
+                    int(daily_mean * (max_R + lead_time_days) * 3),
+                    initial_S * 2,
+                )
+
+                pso_result = find_optimal_rss_pso(
+                    demand_list=demand_list,
+                    lead_time_days=lead_time_days,
+                    ordering_cost=A,
+                    holding_cost_per_unit_per_day=holding_cost_per_unit_per_day,
+                    shortage_cost_per_unit=Cu,
+
+                    min_R=min_R,
+                    max_R=max_R,
+
+                    min_s=0,
+                    max_s=max_stock_bound,
+
+                    min_S=1,
+                    max_S=max_stock_bound,
+
+                    num_particles=num_particles,
+                    maxiter=maxiter,
+                )
+
+                optimal_R = pso_result['R']
+                optimal_s = pso_result['s']
+                optimal_S = pso_result['S']
+
+                optimal_simulation = pso_result['result']
+                optimized_cost = optimal_simulation['total_inventory_cost']
+
+                # =====================================================
+                # 5. Summary biaya
+                # =====================================================
+                initial_cost_total += initial_cost
+                optimized_cost_total += optimized_cost
+
+                penghematan = initial_cost - optimized_cost
+                penghematan_persen = (
+                    penghematan / initial_cost * 100
+                    if initial_cost > 0 else 0
+                )
+
+                data.append({
+                    'nama_barang': item.name,
+
+                    'D': round(D),
+                    'daily_mean': round(daily_mean, 2),
+                    'sigma': round(sigma, 2),
+                    'period_days': period_days,
+
+                    # ==========================
+                    # Sebelum PSO / Initial
+                    # ==========================
+                    'initial_review_interval_days': initial_days,
+                    'initial_s': initial_s,
+                    'initial_S': initial_S,
+                    'initial_N': round(initial_simulation['total_stockout_qty'], 2),
+                    'initial_order_count': initial_simulation['order_count'],
+                    'initial_average_stock': round(initial_simulation['average_stock'], 2),
+
+                    'initial_ordering_cost': round(initial_simulation['ordering_cost']),
+                    'initial_holding_cost': round(initial_simulation['holding_cost']),
+                    'initial_shortage_cost': round(initial_simulation['shortage_cost']),
+                    'initial_biaya_inventory': round(initial_cost),
+
+                    # ==========================
+                    # Sesudah PSO / Optimal
+                    # ==========================
+                    'optimal_review_interval_days': optimal_R,
+                    'optimal_s': optimal_s,
+                    'optimal_S': optimal_S,
+                    'optimal_N': round(optimal_simulation['total_stockout_qty'], 2),
+                    'optimal_order_count': optimal_simulation['order_count'],
+                    'optimal_average_stock': round(optimal_simulation['average_stock'], 2),
+
+                    'optimal_ordering_cost': round(optimal_simulation['ordering_cost']),
+                    'optimal_holding_cost': round(optimal_simulation['holding_cost']),
+                    'optimal_shortage_cost': round(optimal_simulation['shortage_cost']),
+                    'optimal_biaya_inventory': round(optimized_cost),
+
+                    # ==========================
+                    # Selisih
+                    # ==========================
+                    'penghematan': round(penghematan),
+                    'penghematan_persen': round(penghematan_persen, 2),
+                })
 
             context = {
                 'data': data,
-                'inventory_cost_total': round(inventory_cost_total)
+                'period_days': period_days,
+
+                'initial_cost_total': round(initial_cost_total),
+                'optimized_cost_total': round(optimized_cost_total),
+
+                'total_penghematan': round(initial_cost_total - optimized_cost_total),
+                'total_penghematan_pct': round(
+                    (initial_cost_total - optimized_cost_total) / initial_cost_total * 100,
+                    2
+                ) if initial_cost_total > 0 else 0,
             }
 
             return render(request, 'periodic/calculation.html', context)
@@ -2695,3 +2614,536 @@ def _parse_post_int(post, key, default):
 
 def format_seconds(seconds):
     return str(timedelta(seconds=round(seconds)))
+
+# PSO Helper Methods
+import math
+import random
+import numpy as np
+
+
+class Particle:
+    def __init__(self, bounds):
+        self.position = [
+            random.uniform(lower, upper)
+            for lower, upper in bounds
+        ]
+
+        self.velocity = [
+            random.uniform(-(upper - lower), upper - lower) * 0.1
+            for lower, upper in bounds
+        ]
+
+        self.best_pos = list(self.position)
+        self.best_score = float('inf')
+        self.score = float('inf')
+
+    def evaluate(self, cost_func):
+        self.score = cost_func(self.position)
+
+        if self.score < self.best_score:
+            self.best_score = self.score
+            self.best_pos = list(self.position)
+
+    def update_velocity(self, global_best_pos, w, c1=1.5, c2=1.5):
+        for i in range(len(self.position)):
+            r1 = random.random()
+            r2 = random.random()
+
+            cognitive = c1 * r1 * (self.best_pos[i] - self.position[i])
+            social = c2 * r2 * (global_best_pos[i] - self.position[i])
+
+            self.velocity[i] = (w * self.velocity[i]) + cognitive + social
+
+    def update_position(self, bounds):
+        for i in range(len(self.position)):
+            lower, upper = bounds[i]
+
+            self.position[i] += self.velocity[i]
+            self.position[i] = max(lower, min(upper, self.position[i]))
+
+
+def run_pso(cost_func, bounds, num_particles=40, maxiter=100, w_start=0.9, w_end=0.4):
+    particles = [Particle(bounds) for _ in range(num_particles)]
+
+    global_best_pos = None
+    global_best_score = float('inf')
+
+    for iteration in range(maxiter):
+        w = w_start - ((w_start - w_end) * iteration / maxiter)
+
+        for particle in particles:
+            particle.evaluate(cost_func)
+
+            if particle.score < global_best_score:
+                global_best_score = particle.score
+                global_best_pos = list(particle.position)
+
+        for particle in particles:
+            particle.update_velocity(global_best_pos, w)
+            particle.update_position(bounds)
+
+    return global_best_pos, global_best_score
+
+# Kalkulasi simulasi biaya inventory PSO
+def simulate_inventory_rss(
+    demand_list,
+    R,
+    s,
+    S,
+    lead_time_days,
+    ordering_cost,
+    holding_cost_per_unit_per_day,
+    shortage_cost_per_unit,
+    initial_stock=None,
+):
+    R = max(1, int(round(R)))
+    s = max(0, int(round(s)))
+    S = max(s + 1, int(round(S)))
+    lead_time_days = max(0, int(round(lead_time_days)))
+
+    if initial_stock is None:
+        stock_on_hand = S
+    else:
+        stock_on_hand = max(0, int(round(initial_stock)))
+
+    pending_orders = []
+
+    total_ordering_cost = 0
+    total_holding_cost = 0
+    total_shortage_cost = 0
+    total_stockout_qty = 0
+    total_order_qty = 0
+    order_count = 0
+
+    stock_history = []
+    stockout_history = []
+    order_history = []
+
+    for day_index, demand in enumerate(demand_list, start=1):
+        demand = max(0, float(demand))
+
+        # 1. Terima pesanan yang jatuh tempo hari ini
+        arrived_orders = [
+            order for order in pending_orders
+            if order['arrival_day'] == day_index
+        ]
+
+        for order in arrived_orders:
+            stock_on_hand += order['qty']
+
+        pending_orders = [
+            order for order in pending_orders
+            if order['arrival_day'] > day_index
+        ]
+
+        # 2. Penuhi demand
+        if stock_on_hand >= demand:
+            stock_on_hand -= demand
+            stockout_qty = 0
+        else:
+            stockout_qty = demand - stock_on_hand
+            stock_on_hand = 0
+
+        total_stockout_qty += stockout_qty
+        total_shortage_cost += stockout_qty * shortage_cost_per_unit
+
+        # 3. Hitung holding cost berdasarkan stok akhir hari
+        total_holding_cost += stock_on_hand * holding_cost_per_unit_per_day
+
+        # 4. Review setiap R hari
+        order_qty = 0
+
+        if day_index % R == 0:
+            on_order_qty = sum(order['qty'] for order in pending_orders)
+            inventory_position = stock_on_hand + on_order_qty
+
+            if inventory_position <= s:
+                order_qty = S - inventory_position
+                order_qty = max(0, order_qty)
+
+                if order_qty > 0:
+                    arrival_day = day_index + lead_time_days
+
+                    pending_orders.append({
+                        'arrival_day': arrival_day,
+                        'qty': order_qty,
+                    })
+
+                    total_ordering_cost += ordering_cost
+                    total_order_qty += order_qty
+                    order_count += 1
+
+        stock_history.append(stock_on_hand)
+        stockout_history.append(stockout_qty)
+        order_history.append(order_qty)
+
+    total_inventory_cost = (
+        total_ordering_cost
+        + total_holding_cost
+        + total_shortage_cost
+    )
+
+    return {
+        'total_inventory_cost': total_inventory_cost,
+        'ordering_cost': total_ordering_cost,
+        'holding_cost': total_holding_cost,
+        'shortage_cost': total_shortage_cost,
+        'total_stockout_qty': total_stockout_qty,
+        'total_order_qty': total_order_qty,
+        'order_count': order_count,
+        'average_stock': np.mean(stock_history) if stock_history else 0,
+        'stock_history': stock_history,
+        'stockout_history': stockout_history,
+        'order_history': order_history,
+    }
+
+# Cari RsS optimal PSO
+def find_optimal_rss_pso(
+    demand_list,
+    lead_time_days,
+    ordering_cost,
+    holding_cost_per_unit_per_day,
+    shortage_cost_per_unit,
+    min_R=1,
+    max_R=30,
+    min_s=0,
+    max_s=None,
+    min_S=1,
+    max_S=None,
+    num_particles=40,
+    maxiter=100,
+):
+    total_demand = sum(demand_list)
+    mean_demand = np.mean(demand_list) if demand_list else 0
+
+    if max_s is None:
+        max_s = max(10, int(total_demand))
+
+    if max_S is None:
+        max_S = max(20, int(total_demand * 1.5))
+
+    bounds = [
+        (min_R, max_R),   # R
+        (min_s, max_s),   # s
+        (min_S, max_S),   # S
+    ]
+
+    def cost_function(position):
+        R = int(round(position[0]))
+        s = int(round(position[1]))
+        S = int(round(position[2]))
+
+        # Constraint: S harus lebih besar dari s
+        if S <= s:
+            return float('inf')
+
+        result = simulate_inventory_rss(
+            demand_list=demand_list,
+            R=R,
+            s=s,
+            S=S,
+            lead_time_days=lead_time_days,
+            ordering_cost=ordering_cost,
+            holding_cost_per_unit_per_day=holding_cost_per_unit_per_day,
+            shortage_cost_per_unit=shortage_cost_per_unit,
+            initial_stock=S,
+        )
+
+        return result['total_inventory_cost']
+
+    best_pos, best_score = run_pso(
+        cost_func=cost_function,
+        bounds=bounds,
+        num_particles=num_particles,
+        maxiter=maxiter,
+    )
+
+    best_R = int(round(best_pos[0]))
+    best_s = int(round(best_pos[1]))
+    best_S = int(round(best_pos[2]))
+
+    if best_S <= best_s:
+        best_S = best_s + 1
+
+    best_result = simulate_inventory_rss(
+        demand_list=demand_list,
+        R=best_R,
+        s=best_s,
+        S=best_S,
+        lead_time_days=lead_time_days,
+        ordering_cost=ordering_cost,
+        holding_cost_per_unit_per_day=holding_cost_per_unit_per_day,
+        shortage_cost_per_unit=shortage_cost_per_unit,
+        initial_stock=best_S,
+    )
+
+    return {
+        'R': best_R,
+        's': best_s,
+        'S': best_S,
+        'cost': best_result['total_inventory_cost'],
+        'result': best_result,
+    }
+
+# ==============================================================================
+# NORMAL DISTRIBUTION HELPER
+# ==============================================================================
+
+def normal_pdf(z):
+    return math.exp(-0.5 * z * z) / math.sqrt(2 * math.pi)
+
+
+def normal_cdf(z):
+    return NormalDist().cdf(z)
+
+
+def normal_loss_function(z):
+    """
+    L(z) = f(z) - z * (1 - F(z))
+    """
+    return normal_pdf(z) - z * (1 - normal_cdf(z))
+
+
+# ==============================================================================
+# HADLEY-WHITIN / PERIODIC REVIEW
+# ==============================================================================
+
+def find_initial_to(A, D, h):
+    """
+    T0 = sqrt(2A / (D*h))
+
+    T0 di sini adalah fraksi periode, bukan hari langsung.
+    """
+    D = max(float(D), 1e-9)
+    h = max(float(h), 1e-9)
+    A = max(float(A), 0)
+
+    return math.sqrt((2 * A) / (D * h))
+
+
+def calculate_periodic_review_hadley(
+    to,
+    D,
+    A,
+    h,
+    Cu,
+    P,
+    L,
+    sigma,
+    include_purchase_cost=False,
+):
+    """
+    Mengikuti struktur rumus referensi:
+
+    OT = D*P + A/To + h(R - D*L + D*To/2) + (Cu/To)*N
+
+    Keterangan:
+    to    = T0 / review interval dalam fraksi periode
+    D     = total demand selama periode perencanaan
+    A     = biaya pesan per order
+    h     = biaya simpan per unit per periode
+    Cu    = biaya kekurangan per unit
+    P     = harga material/barang per unit
+    L     = lead time dalam fraksi periode
+    sigma = standar deviasi demand selama periode
+    """
+
+    to = max(float(to), 1e-9)
+    D = max(float(D), 0)
+    A = max(float(A), 0)
+    h = max(float(h), 0)
+    Cu = max(float(Cu), 1e-9)
+    P = max(float(P), 0)
+    L = max(float(L), 0)
+    sigma = max(float(sigma), 0)
+
+    # alpha = To * h / Cu
+    alpha = (to * h) / Cu
+    alpha = max(1e-6, min(1 - 1e-6, alpha))
+
+    # Referensi memakai z alpha positif.
+    # Kalau alpha kecil 0.0134, z sekitar 2.2
+    z_alpha = NormalDist().inv_cdf(1 - alpha)
+
+    fz = normal_pdf(z_alpha)
+    psi = 1 - normal_cdf(z_alpha)
+    loss = normal_loss_function(z_alpha)
+
+    protection_period = to + L
+    sigma_protection = sigma * math.sqrt(protection_period)
+
+    safety_stock = z_alpha * sigma_protection
+
+    # Reorder level / R dalam unit barang
+    reorder_level = (D * to) + (D * L) + safety_stock
+
+    # Expected shortage
+    N = sigma_protection * loss
+    N = max(0, N)
+
+    purchase_cost = D * P if include_purchase_cost else 0
+    ordering_cost = A / to
+    holding_cost = h * (reorder_level - (D * L) + ((D * to) / 2))
+    shortage_cost = (Cu / to) * N
+
+    inventory_cost = ordering_cost + holding_cost + shortage_cost
+    total_cost = purchase_cost + inventory_cost
+
+    return {
+        'to': to,
+        'alpha': alpha,
+        'z_alpha': z_alpha,
+        'fz': fz,
+        'psi': psi,
+        'loss': loss,
+
+        'protection_period': protection_period,
+        'sigma_protection': sigma_protection,
+        'safety_stock': safety_stock,
+        'reorder_level': reorder_level,
+        'N': N,
+
+        'purchase_cost': purchase_cost,
+        'ordering_cost': ordering_cost,
+        'holding_cost': holding_cost,
+        'shortage_cost': shortage_cost,
+
+        'inventory_cost': inventory_cost,
+        'total_cost': total_cost,
+    }
+
+
+def calculate_s_s_policy(to, D, A, h, Cu, L, sigma):
+    """
+    Mengikuti pendekatan parameter (s, S) dari referensi.
+
+    XR     = R * D
+    XRL    = (R + L) * D
+    sigmaRL = sigma * sqrt(R + L)
+    """
+
+    to = max(float(to), 1e-9)
+    D = max(float(D), 0)
+    A = max(float(A), 0)
+    h = max(float(h), 1e-9)
+    Cu = max(float(Cu), 1e-9)
+    L = max(float(L), 0)
+    sigma = max(float(sigma), 0)
+
+    XR = to * D
+    XRL = (to + L) * D
+    sigma_RL = sigma * math.sqrt(to + L)
+
+    XR_safe = max(XR, 1e-9)
+    sigma_safe = max(sigma_RL, 1e-9)
+
+    # Di referensi tertulis A/(v*r), tapi contoh angkanya memakai A/h.
+    # Jadi kalau h kamu sudah berupa biaya simpan Rupiah/unit/periode, pakai A/h.
+    Qp = (
+        1.3
+        * (XR_safe ** 0.494)
+        * ((A / h) ** 0.506)
+        * ((1 + ((sigma_safe ** 2) / (XR_safe ** 2))) ** 0.116)
+    )
+
+    Qp = max(1, Qp)
+
+    z_sp = math.sqrt(max(0, (Qp * h) / (sigma_safe * Cu)))
+
+    if z_sp <= 0:
+        Sp = (0.973 * XRL) + (sigma_RL * (1.063))
+    else:
+        Sp = (
+            (0.973 * XRL)
+            + sigma_RL * ((0.183 / z_sp) + 1.063 - (2.192 * z_sp))
+        )
+
+    # Sesuai referensi:
+    # k = h / (h + Cu)
+    k = h / (h + Cu)
+    S0 = XRL + (k * sigma_RL)
+
+    s = min(Sp, S0)
+    S = min(Sp + Qp, S0)
+
+    # Safety guard supaya S tidak lebih kecil dari s
+    if S <= s:
+        S = s + Qp
+
+    return {
+        'XR': XR,
+        'XRL': XRL,
+        'sigma_RL': sigma_RL,
+        'Qp': Qp,
+        'z_sp': z_sp,
+        'Sp': Sp,
+        'k': k,
+        'S0': S0,
+        's': s,
+        'S': S,
+    }
+
+
+def find_optimal_to_pso(
+    D,
+    A,
+    h,
+    Cu,
+    P,
+    L,
+    sigma,
+    period_days,
+    min_days=1,
+    max_days=30,
+    include_purchase_cost=False,
+    num_particles=40,
+    maxiter=100,
+):
+    """
+    PSO mencari To optimal.
+
+    Bounds PSO tetap dalam fraksi periode:
+    min_to = min_days / period_days
+    max_to = max_days / period_days
+    """
+
+    period_days = max(int(period_days), 1)
+
+    min_to = max(1e-6, min_days / period_days)
+    max_to = max(min_to + 1e-6, max_days / period_days)
+
+    def cost_function(position):
+        to = position[0]
+
+        result = calculate_periodic_review_hadley(
+            to=to,
+            D=D,
+            A=A,
+            h=h,
+            Cu=Cu,
+            P=P,
+            L=L,
+            sigma=sigma,
+            include_purchase_cost=include_purchase_cost,
+        )
+
+        # Untuk optimasi, sebaiknya pakai inventory_cost saja.
+        # purchase_cost D*P konstan dan tidak memengaruhi To.
+        return result['inventory_cost']
+
+    best_pos, best_score = run_pso(
+        cost_function,
+        bounds=[(min_to, max_to)],
+        num_particles=num_particles,
+        maxiter=maxiter,
+    )
+
+    return best_pos[0], best_score
+
+
+def to_to_days(to, period_days):
+    return max(1, round(to * period_days))
+
+
+def days_to_to(days, period_days):
+    return max(1, days) / max(1, period_days)
